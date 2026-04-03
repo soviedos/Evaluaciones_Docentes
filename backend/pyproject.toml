@@ -41,3 +41,11 @@ select = ["E", "F", "I", "N", "W", "UP"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "unit: fast tests without I/O",
+    "integration: tests that hit the database",
+    "api: end-to-end HTTP tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:sqlalchemy.*",
+]
