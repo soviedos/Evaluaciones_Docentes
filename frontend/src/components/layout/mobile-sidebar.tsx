@@ -1,8 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -24,12 +24,15 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-64 p-0">
         <SheetHeader className="flex h-14 flex-row items-center gap-2.5 border-b px-4">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <GraduationCap className="h-4 w-4" />
-          </div>
-          <SheetTitle className="text-sm font-semibold tracking-tight">
-            Evaluaciones
-          </SheetTitle>
+          <Image
+            src="/images/logo-cenfotc-Horizontal-Negro.png"
+            alt="Universidad CENFOTEC"
+            width={160}
+            height={36}
+            className="h-7 w-auto object-contain dark:invert"
+            priority
+          />
+          <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
         </SheetHeader>
 
         <nav className="px-2 py-3">
