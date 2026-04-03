@@ -1,20 +1,40 @@
-import { Sidebar, Navbar } from "@/components/layout";
+"use client";
+
+import { useState } from "react";
+import { Sidebar, Navbar, MobileSidebar } from "@/components/layout";
+import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
+    <div className="relative min-h-screen bg-muted/30">
+      {/* Desktop sidebar */}
+      <div className="hidden lg:block">
+        <Sidebar
+          collapsed={collapsed}
+          onToggle={() => setCollapsed((prev) => !prev)}
+        />
+      </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Navbar />
+      {/* Mobile sidebar (Sheet) */}
+      <MobileSidebar open={mobileOpen} onOpenChange={setMobileOpen} />
 
-        <main className="flex-1 overflow-y-auto bg-muted/30 p-6">
-          {children}
-        </main>
+      {/* Main area: offset by sidebar width */}
+      <div
+        className={cn(
+          "flex min-h-screen flex-col transition-[margin-left] duration-200 ease-in-out",
+          collapsed ? "lg:ml-[68px]" : "lg:ml-60",
+        )}
+      >
+        <Navbar onMenuClick={() => setMobileOpen(true)} />
+
+        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
       </div>
     </div>
   );
