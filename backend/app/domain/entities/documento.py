@@ -13,5 +13,5 @@ class Documento(UUIDMixin, TimestampMixin, Base):
     hash_sha256: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
     storage_path: Mapped[str] = mapped_column(String(1000), nullable=False)
     estado: Mapped[str] = mapped_column(String(20), nullable=False, default="subido")
-    tamano_bytes: Mapped[int] = mapped_column(nullable=True)
+    tamano_bytes: Mapped[int | None] = mapped_column(nullable=True)
     error_detalle: Mapped[str | None] = mapped_column(Text, nullable=True)
