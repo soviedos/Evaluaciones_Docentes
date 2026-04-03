@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GraduationCap, PanelLeftClose, PanelLeft } from "lucide-react";
@@ -27,14 +28,20 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       )}
     >
       {/* Brand */}
-      <div className="flex h-14 items-center gap-2.5 px-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-          <GraduationCap className="h-4 w-4" />
-        </div>
-        {!collapsed && (
-          <span className="truncate text-sm font-semibold tracking-tight">
-            Evaluaciones
-          </span>
+      <div className="flex h-14 items-center justify-center px-4">
+        {collapsed ? (
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+            <GraduationCap className="h-4 w-4" />
+          </div>
+        ) : (
+          <Image
+            src="/images/logo-cenfotc-Horizontal-Negro.png"
+            alt="Universidad CENFOTEC"
+            width={180}
+            height={40}
+            className="h-8 w-auto object-contain dark:invert"
+            priority
+          />
         )}
       </div>
 

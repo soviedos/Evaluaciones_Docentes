@@ -11,9 +11,9 @@ vi.mock("next/navigation", () => ({
 describe("Sidebar", () => {
   const defaultProps = { collapsed: false, onToggle: vi.fn() };
 
-  it("renders the brand name", () => {
+  it("renders the brand logo", () => {
     render(<Sidebar {...defaultProps} />);
-    expect(screen.getByText("Evaluaciones")).toBeInTheDocument();
+    expect(screen.getByAltText("Universidad CENFOTEC")).toBeInTheDocument();
   });
 
   it("renders all 8 navigation items", () => {
@@ -51,7 +51,7 @@ describe("Sidebar", () => {
 
   it("hides labels when collapsed", () => {
     render(<Sidebar {...{ ...defaultProps, collapsed: true }} />);
-    expect(screen.queryByText("Evaluaciones")).not.toBeInTheDocument();
+    expect(screen.queryByAltText("Universidad CENFOTEC")).not.toBeInTheDocument();
     expect(screen.queryByText("Inicio")).not.toBeInTheDocument();
   });
 

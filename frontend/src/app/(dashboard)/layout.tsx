@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sidebar, Navbar, MobileSidebar } from "@/components/layout";
+import { Sidebar, Navbar, MobileSidebar, Footer } from "@/components/layout";
 import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({
@@ -35,6 +35,8 @@ export default function DashboardLayout({
         <Navbar onMenuClick={() => setMobileOpen(true)} />
 
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+
+        <Footer />
       </div>
     </div>
   );
