@@ -14,9 +14,10 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "python.defaultInterpreterPath": "./backend/.venv/bin/python",
-  "python.analysis.extraPaths": ["./backend"],
-  "typescript.tsdk": "frontend/node_modules/typescript/lib",
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+  "python.analysis.pythonPath": "${workspaceFolder}/backend/.venv/bin/python",
+  "python.analysis.extraPaths": ["${workspaceFolder}/backend"],
+  "js/ts.tsdk.path": "frontend/node_modules/typescript/lib",
   "files.exclude": {
     "**/__pycache__": true,
     "**/.pytest_cache": true,
