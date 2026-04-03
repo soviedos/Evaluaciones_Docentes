@@ -69,9 +69,12 @@ export interface ApiError {
 // Upload
 // =============================================
 
-export interface UploadResponse {
-  documento_id: string;
+export interface DocumentoUploadResponse {
+  id: string;
   nombre_archivo: string;
+  hash_sha256: string;
   estado: DocumentoEstado;
-  task_id: string;
+  tamano_bytes: number | null;
+  created_at: string;
+  updated_at: string;
 }
