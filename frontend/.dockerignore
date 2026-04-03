@@ -1,0 +1,26 @@
+# Dependencies (installed inside container)
+node_modules/
+
+# Build output
+.next/
+out/
+
+# Caches
+.turbo/
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+
+# Docs
+*.md
+LICENSE

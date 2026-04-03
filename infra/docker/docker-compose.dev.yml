@@ -20,7 +20,6 @@ services:
       target: development
     volumes:
       - ../../backend:/app
-      - backend_venv:/app/.venv
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     environment:
       ENVIRONMENT: development
@@ -31,7 +30,6 @@ services:
       target: development
     volumes:
       - ../../backend:/app
-      - backend_venv:/app/.venv
     command: celery -A app.tasks.celery_app worker --loglevel=debug
     environment:
       ENVIRONMENT: development
@@ -49,6 +47,5 @@ services:
       WATCHPACK_POLLING: "true"
 
 volumes:
-  backend_venv:
   frontend_node_modules:
   frontend_next:

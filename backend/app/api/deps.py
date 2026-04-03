@@ -1,14 +1,16 @@
-from collections.abc import AsyncGenerator
+"""FastAPI dependency injection functions.
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+Centralizes all shared dependencies (DB sessions, services, etc.)
+to keep route handlers thin and testable.
+"""
 
-from app.config import settings
+from typing import Annotated
 
-engine = create_async_engine(settings.database_url, echo=settings.environment == "development")
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
-async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+from app.infrastructure.database.session import get_db
 
-
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with async_session() as session:
-        yield session
+# Typed annotation for route-handler signatures:
+#   async def my_route(db: DbSession): ...
+DbSession = Annotated[AsyncSession, Depends(get_db)]
