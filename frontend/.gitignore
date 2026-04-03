@@ -1,0 +1,7 @@
+next-env.d.ts
+
+# Test outputs
+coverage/
+e2e/results/
+playwright-report/
+test-results/
