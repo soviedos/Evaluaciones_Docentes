@@ -1,9 +1,9 @@
 from app.domain.schemas.common import (
-                                       BaseSchema,
-                                       ErrorResponse,
-                                       HealthResponse,
-                                       PaginatedItems,
-                                       PaginatedResponse,
+    BaseSchema,
+    ErrorResponse,
+    HealthResponse,
+    PaginatedItems,
+    PaginatedResponse,
 )
 from app.domain.schemas.documento import DocumentoCreate, DocumentoList, DocumentoRead
 from app.domain.schemas.evaluacion import EvaluacionList, EvaluacionRead
