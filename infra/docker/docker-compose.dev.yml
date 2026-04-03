@@ -1,0 +1,33 @@
+# Overrides para desarrollo local
+services:
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+      target: development
+    volumes:
+      - ../../backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: debug
+
+  celery-worker:
+    volumes:
+      - ../../backend:/app
+    command: celery -A app.tasks.celery_app worker --loglevel=debug --reload
+    environment:
+      ENVIRONMENT: development
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+      target: development
+    volumes:
+      - ../../frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+    environment:
+      ENVIRONMENT: development
