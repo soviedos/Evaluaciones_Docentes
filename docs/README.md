@@ -19,9 +19,14 @@
 
 Los ADR documentan el **porqué** de cada decisión técnica significativa. Seguimos el formato [MADR](https://adr.github.io/madr/).
 
-| ADR                        | Título                                | Estado   |
-| -------------------------- | ------------------------------------- | -------- |
-| [001](adr/001-monorepo.md) | Usar monorepo para frontend + backend | Aceptada |
+| ADR                                                | Título                                        | Estado   |
+| -------------------------------------------------- | --------------------------------------------- | -------- |
+| [001](adr/001-monorepo.md)                         | Usar monorepo para frontend + backend         | Aceptada |
+| [002](adr/002-nextjs-frontend.md)                  | Next.js como framework frontend               | Aceptada |
+| [003](adr/003-fastapi-backend.md)                  | FastAPI como framework backend                | Aceptada |
+| [004](adr/004-postgresql-fuente-verdad.md)         | PostgreSQL como fuente de verdad              | Aceptada |
+| [005](adr/005-parser-deterministico-pdf.md)        | Parser determinístico para extracción de PDFs | Aceptada |
+| [006](adr/006-gemini-solo-analisis-cualitativo.md) | Gemini API solo para análisis cualitativo     | Aceptada |
 
 Para crear un nuevo ADR, copiar la plantilla y usar el siguiente número consecutivo:
 
