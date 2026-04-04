@@ -50,6 +50,3 @@ def _extract_periodo(text: str) -> str | None:
 def _extract_recinto(text: str) -> str | None:
     m = RECINTO_RE.search(text)
     return m.group(1).strip() if m else None
-    return m.group(1).strip() if m else None
-    return m.group(1).strip() if m else None
-    return m.group(1).strip() if m else None
