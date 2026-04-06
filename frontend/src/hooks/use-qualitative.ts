@@ -121,6 +121,7 @@ export function useQualitative(filters: QualitativeFilters = {}) {
           : "Error al cargar análisis cualitativo";
       setState((prev) => ({ ...prev, isLoading: false, error: message }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtersKey]);
 
   useEffect(() => {

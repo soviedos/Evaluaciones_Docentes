@@ -135,6 +135,7 @@ export function useAnalytics(filters: AnalyticsFilters = {}) {
         err instanceof Error ? err.message : "Error al cargar analytics";
       setState((prev) => ({ ...prev, isLoading: false, error: message }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtersKey]);
 
   useEffect(() => {

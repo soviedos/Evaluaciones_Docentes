@@ -49,6 +49,7 @@ export function useDocuments(params: DocumentoFilterParams = {}) {
         err instanceof Error ? err.message : "Error al cargar documentos";
       setState((prev) => ({ ...prev, isLoading: false, error: message }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramsKey]);
 
   useEffect(() => {

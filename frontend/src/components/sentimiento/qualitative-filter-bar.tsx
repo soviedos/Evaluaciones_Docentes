@@ -138,7 +138,7 @@ export function QualitativeFilterBar({
                 onEscuelaChange(!v || v === ALL_ESCUELAS ? undefined : v)
               }
             >
-              <SelectTrigger size="sm" className="min-w-[240px]">
+              <SelectTrigger size="sm" className="min-w-60">
                 <SelectValue placeholder="Todas las escuelas" />
               </SelectTrigger>
               <SelectContent>
@@ -161,7 +161,7 @@ export function QualitativeFilterBar({
                 onPeriodoChange(!v || v === ALL_PERIODOS ? undefined : v)
               }
             >
-              <SelectTrigger size="sm" className="min-w-[160px]">
+              <SelectTrigger size="sm" className="min-w-40">
                 <SelectValue placeholder="Todos los períodos" />
               </SelectTrigger>
               <SelectContent>
@@ -184,7 +184,7 @@ export function QualitativeFilterBar({
                 onDocenteChange(!v || v === ALL_DOCENTES ? undefined : v)
               }
             >
-              <SelectTrigger size="sm" className="min-w-[363px]">
+              <SelectTrigger size="sm" className="min-w-91">
                 <SelectValue placeholder="Todos los docentes" />
               </SelectTrigger>
               <SelectContent>
@@ -207,7 +207,7 @@ export function QualitativeFilterBar({
                 onAsignaturaChange(!v || v === ALL_ASIGNATURAS ? undefined : v)
               }
             >
-              <SelectTrigger size="sm" className="min-w-[330px]">
+              <SelectTrigger size="sm" className="min-w-83">
                 <SelectValue placeholder="Todas las asignaturas" />
               </SelectTrigger>
               <SelectContent>

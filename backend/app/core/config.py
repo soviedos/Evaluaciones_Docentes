@@ -39,7 +39,7 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _check_production_secrets(self) -> "Settings":
-        if self.environment != "development":
+        if self.environment not in ("development", "testing"):
             if self.secret_key.get_secret_value() == "change-this-in-production":
                 raise ValueError(
                     "SECRET_KEY must be changed from the default in non-development environments"

@@ -159,7 +159,7 @@ export function PeriodFilter({
               onEscuelaChange(!v || v === ALL_ESCUELAS ? undefined : v)
             }
           >
-            <SelectTrigger size="sm" className="min-w-[240px]">
+            <SelectTrigger size="sm" className="min-w-60">
               <SelectValue placeholder="Todas las escuelas" />
             </SelectTrigger>
             <SelectContent>
@@ -182,7 +182,7 @@ export function PeriodFilter({
               onCursoChange(!v || v === ALL_CURSOS ? undefined : v)
             }
           >
-            <SelectTrigger size="sm" className="min-w-[280px]">
+            <SelectTrigger size="sm" className="min-w-70">
               <SelectValue placeholder="Todos los cursos" />
             </SelectTrigger>
             <SelectContent>
