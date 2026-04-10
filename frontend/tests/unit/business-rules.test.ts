@@ -4,9 +4,7 @@ import {
   compareSeveridad,
   DROP_THRESHOLDS,
   isModalidad,
-  isValidPeriodo,
   MODALIDADES,
-  modalidadFromPeriodo,
   modalidadLabel,
   SENTIMIENTOS,
   sentimientoColor,
@@ -53,47 +51,8 @@ describe("Modalidad helpers", () => {
   });
 });
 
-// ════════════════════════════════════════════════════════════════
-//  Periodo validation
-// ════════════════════════════════════════════════════════════════
-
-describe("Periodo validation", () => {
-  it.each([
-    "C1 2025",
-    "C3 2024",
-    "M1 2026",
-    "M10 2025",
-    "MT3 2024",
-    "B2B-EMPRESA-2025",
-    "B2B Microsoft 2026",
-  ])("isValidPeriodo('%s') is true", (p) => {
-    expect(isValidPeriodo(p)).toBe(true);
-  });
-
-  it.each(["garbage", "", "X1 2025", "C4 2025", "2025"])(
-    "isValidPeriodo('%s') is false",
-    (p) => {
-      expect(isValidPeriodo(p)).toBe(false);
-    },
-  );
-
-  it("modalidadFromPeriodo infers cuatrimestral", () => {
-    expect(modalidadFromPeriodo("C2 2025")).toBe("CUATRIMESTRAL");
-  });
-
-  it("modalidadFromPeriodo infers mensual", () => {
-    expect(modalidadFromPeriodo("M10 2024")).toBe("MENSUAL");
-    expect(modalidadFromPeriodo("MT3 2026")).toBe("MENSUAL");
-  });
-
-  it("modalidadFromPeriodo infers B2B", () => {
-    expect(modalidadFromPeriodo("B2B-EMPRESA-2025")).toBe("B2B");
-  });
-
-  it("modalidadFromPeriodo returns DESCONOCIDA for unknown", () => {
-    expect(modalidadFromPeriodo("garbage")).toBe("DESCONOCIDA");
-  });
-});
+// Period validation and modalidad inference are now handled
+// exclusively by the backend (see backend/app/domain/periodo.py).
 
 // ════════════════════════════════════════════════════════════════
 //  Severidad

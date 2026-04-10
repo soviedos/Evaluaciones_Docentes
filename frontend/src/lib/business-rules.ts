@@ -5,7 +5,9 @@
  * utilities that mirror the backend domain enums and rules defined in
  * docs/business-rules/evaluation-rules.md.
  *
- * Re-exports periodo-sort utilities for convenience.
+ * Period parsing, modalidad inference, and chronological sorting are
+ * handled exclusively by the backend. The frontend trusts the backend's
+ * pre-sorted responses and modalidad fields.
  */
 
 import type {
@@ -18,13 +20,6 @@ import type {
   TipoAlerta,
   TipoComentario,
 } from "@/types";
-
-// Re-export periodo sorting so consumers can import everything from one place
-export {
-  comparePeriodos,
-  parsePeriodoKey,
-  sortByPeriodo,
-} from "./periodo-sort";
 
 // ════════════════════════════════════════════════════════════════════════
 //  Modalidad [BR-MOD-01, BR-FE-01, BR-FE-02]
@@ -70,29 +65,6 @@ export function modalidadLabel(m: ModalidadConDesconocida): string {
 /** Whether a string is a valid Modalidad (excluding DESCONOCIDA). */
 export function isModalidad(v: string): v is Modalidad {
   return v === "CUATRIMESTRAL" || v === "MENSUAL" || v === "B2B";
-}
-
-// ════════════════════════════════════════════════════════════════════════
-//  Periodo validation [BR-MOD-03, BR-AN-41]
-// ════════════════════════════════════════════════════════════════════════
-
-const RE_CUATRIMESTRAL = /^C[1-3]\s+\d{4}$/i;
-const RE_MENSUAL = /^MT?\d{1,2}\s+\d{4}$/i;
-const RE_B2B = /^B2B[\s-].+/i;
-
-/** Check if a periodo string matches any known format [BR-MOD-03]. */
-export function isValidPeriodo(periodo: string): boolean {
-  const s = periodo.trim();
-  return RE_CUATRIMESTRAL.test(s) || RE_MENSUAL.test(s) || RE_B2B.test(s);
-}
-
-/** Infer the modalidad from a raw periodo string [BR-MOD-03]. */
-export function modalidadFromPeriodo(periodo: string): ModalidadConDesconocida {
-  const s = periodo.trim().toUpperCase();
-  if (s.startsWith("B2B")) return "B2B";
-  if (RE_CUATRIMESTRAL.test(s)) return "CUATRIMESTRAL";
-  if (RE_MENSUAL.test(s)) return "MENSUAL";
-  return "DESCONOCIDA";
 }
 
 // ════════════════════════════════════════════════════════════════════════

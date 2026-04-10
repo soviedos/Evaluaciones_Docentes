@@ -180,6 +180,7 @@ class AnalyticsRepository:
         stmt = (
             select(
                 Evaluacion.periodo,
+                func.min(Evaluacion.modalidad).label("modalidad"),
                 func.avg(Evaluacion.puntaje_general.cast(Float)).label("promedio"),
                 func.count(Evaluacion.id).label("evaluaciones_count"),
             )
@@ -197,6 +198,7 @@ class AnalyticsRepository:
         unsorted = [
             {
                 "periodo": r.periodo,
+                "modalidad": r.modalidad,
                 "promedio": round(float(r.promedio), 2),
                 "evaluaciones_count": r.evaluaciones_count,
             }
@@ -291,3 +293,25 @@ class AnalyticsRepository:
                 stmt = stmt.where(Evaluacion.periodo == periodo)
         rows = (await self.session.execute(stmt)).scalars().all()
         return sorted(rows)
+
+    # ── 8. Distinct periodos ────────────────────────────────────────
+
+    async def distinct_periodos(
+        self,
+        *,
+        modalidad: str | None = None,
+    ) -> list[dict]:
+        """Return distinct periodos with their modalidad, sorted chronologically."""
+        stmt = (
+            select(
+                Evaluacion.periodo,
+                func.min(Evaluacion.modalidad).label("modalidad"),
+            )
+            .where(Evaluacion.estado == "completado")
+            .group_by(Evaluacion.periodo)
+        )
+        if modalidad:
+            stmt = stmt.where(Evaluacion.modalidad == modalidad)
+        rows = (await self.session.execute(stmt)).all()
+        unsorted = [{"periodo": r.periodo, "modalidad": r.modalidad} for r in rows]
+        return sort_periodos(unsorted)
