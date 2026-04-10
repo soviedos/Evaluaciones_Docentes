@@ -16,15 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MODALIDADES, modalidadFromPeriodo } from "@/lib/business-rules";
-import { comparePeriodos } from "@/lib/periodo-sort";
-import type { Modalidad } from "@/types";
+import { MODALIDADES } from "@/lib/business-rules";
+import type { Modalidad, PeriodoOption } from "@/types";
 
 const ALL_ESCUELAS = "Todas las escuelas";
 const ALL_CURSOS = "Todos los cursos";
 
 interface PeriodFilterProps {
-  periodos: string[];
+  periodos: PeriodoOption[];
   selectedModalidad: Modalidad | undefined;
   selectedPeriodo: string | undefined;
   escuelas: string[];
@@ -50,22 +49,21 @@ export function PeriodFilter({
   onEscuelaChange,
   onCursoChange,
 }: PeriodFilterProps) {
-  // Group periods by modalidad and count
+  // Group periods by modalidad and count (modalidad comes from backend)
   const modalidadCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const p of periodos) {
-      const m = modalidadFromPeriodo(p);
-      counts[m] = (counts[m] ?? 0) + 1;
+      counts[p.modalidad] = (counts[p.modalidad] ?? 0) + 1;
     }
     return counts;
   }, [periodos]);
 
-  // Filter periods for the selected modalidad, sorted chronologically
+  // Filter periods for the selected modalidad (already sorted by backend)
   const filteredPeriodos = useMemo(() => {
     if (!selectedModalidad) return [];
     return periodos
-      .filter((p) => modalidadFromPeriodo(p) === selectedModalidad)
-      .sort(comparePeriodos);
+      .filter((p) => p.modalidad === selectedModalidad)
+      .map((p) => p.periodo);
   }, [periodos, selectedModalidad]);
 
   const handleModalidadClick = (m: Modalidad) => {

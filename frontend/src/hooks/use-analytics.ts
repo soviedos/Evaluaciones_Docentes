@@ -8,7 +8,6 @@ import {
   fetchEvolucion,
   fetchRanking,
 } from "@/lib/api/analytics";
-import { sortByPeriodo } from "@/lib/periodo-sort";
 import type {
   DimensionPromedio,
   DocentePromedio,
@@ -104,7 +103,7 @@ export function useAnalytics(filters: AnalyticsFilters = {}) {
       ).then((evolucion) => {
         setState((prev) => ({
           ...prev,
-          evolucion: sortByPeriodo(evolucion),
+          evolucion,
         }));
       });
       const rankingP = fetchRanking(

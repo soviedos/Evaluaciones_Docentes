@@ -12,11 +12,22 @@ from app.domain.schemas.analytics import (
     DimensionPromedio,
     DocentePromedio,
     PeriodoMetrica,
+    PeriodoOption,
     RankingDocente,
     ResumenGeneral,
 )
 
 router = APIRouter()
+
+
+@router.get("/periodos", response_model=list[PeriodoOption])
+async def listar_periodos(
+    db: DbSession,
+    modalidad: str | None = Query(None, description="Filtrar por modalidad"),
+):
+    """Periodos disponibles con su modalidad, ordenados cronológicamente."""
+    svc = AnalyticsService(db)
+    return await svc.periodos(modalidad=modalidad)
 
 
 @router.get("/escuelas", response_model=list[str])

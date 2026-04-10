@@ -59,8 +59,18 @@ const mockDimensiones: DimensionPromedio[] = [
 ];
 
 const mockEvolucion: PeriodoMetrica[] = [
-  { periodo: "C1 2025", promedio: 85, evaluaciones_count: 5 },
-  { periodo: "C2 2025", promedio: 90, evaluaciones_count: 5 },
+  {
+    periodo: "C1 2025",
+    promedio: 85,
+    evaluaciones_count: 5,
+    modalidad: "CUATRIMESTRAL",
+  },
+  {
+    periodo: "C2 2025",
+    promedio: 90,
+    evaluaciones_count: 5,
+    modalidad: "CUATRIMESTRAL",
+  },
 ];
 
 const mockRanking: RankingDocente[] = [

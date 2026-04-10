@@ -9,6 +9,7 @@ from app.domain.schemas.analytics import (
     DimensionPromedio,
     DocentePromedio,
     PeriodoMetrica,
+    PeriodoOption,
     RankingDocente,
     ResumenGeneral,
 )
@@ -155,6 +156,20 @@ class AnalyticsService:
             return cached
         result = await self.repo.distinct_escuelas(modalidad=modalidad, periodo=periodo)
         await analytics_cache.set(key, result)
+        return result
+
+    async def periodos(
+        self,
+        *,
+        modalidad: str | None = None,
+    ) -> list[PeriodoOption]:
+        key = f"analytics:periodos:{modalidad}"
+        cached = await analytics_cache.get(key)
+        if cached is not None:
+            return [PeriodoOption(**r) for r in cached]
+        rows = await self.repo.distinct_periodos(modalidad=modalidad)
+        result = [PeriodoOption(**r) for r in rows]
+        await analytics_cache.set(key, [r.model_dump() for r in result])
         return result
 
     async def cursos(
