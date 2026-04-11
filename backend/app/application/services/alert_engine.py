@@ -132,12 +132,27 @@ class AlertEngine:
         snap_actual: dict[tuple[str, str], DocenteCursoSnapshot],
         snap_anterior: dict[tuple[str, str], DocenteCursoSnapshot],
     ) -> list[AlertCandidate]:
-        """Run all detectors for each docente+curso in the current period."""
+        """Run all detectors for each docente+curso in the current period.
+
+        Deduplicates candidates by their natural key
+        ``(docente, curso, periodo, tipo_alerta, modalidad)`` [AL-10][AL-40].
+        """
         candidates: list[AlertCandidate] = []
+        seen: set[tuple[str, str, str, str, str]] = set()
 
         for key, actual in snap_actual.items():
             anterior = snap_anterior.get(key)
             for detector in self._detectors:
-                candidates.extend(detector.detect(actual, anterior))
+                for candidate in detector.detect(actual, anterior):
+                    dedup_key = (
+                        candidate.docente_nombre,
+                        candidate.curso,
+                        candidate.periodo,
+                        candidate.tipo_alerta.value,
+                        candidate.modalidad,
+                    )
+                    if dedup_key not in seen:
+                        seen.add(dedup_key)
+                        candidates.append(candidate)
 
         return candidates

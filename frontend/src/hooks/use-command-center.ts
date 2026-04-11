@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchDashboardSummary } from "@/lib/api/dashboard";
 import { fetchAlertSummary, fetchAlerts } from "@/lib/api/alertas";
-import { sortByPeriodo } from "@/lib/periodo-sort";
 import type {
   AlertaResponse,
   AlertaSummary,
@@ -56,10 +55,7 @@ export function useCommandCenter() {
         ),
       ]);
 
-      // Sort tendencia chronologically [BR-AN-40]
-      if (dashboard.tendencia) {
-        dashboard.tendencia = sortByPeriodo(dashboard.tendencia);
-      }
+      // Tendencia is already sorted chronologically by the backend [BR-AN-40]
 
       if (!signal.aborted) {
         setState({

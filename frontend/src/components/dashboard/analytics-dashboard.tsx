@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { BarChart3, GraduationCap, TrendingUp, Users } from "lucide-react";
 import { useAnalytics } from "@/hooks/use-analytics";
-import { comparePeriodos } from "@/lib/periodo-sort";
 import { fetchEscuelas, fetchCursos } from "@/lib/api/analytics";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { DocenteBarChart } from "@/components/dashboard/docente-bar-chart";
@@ -63,7 +62,11 @@ export function AnalyticsDashboard() {
   };
 
   const periodos = useMemo(
-    () => evolucion.map((e) => e.periodo).sort(comparePeriodos),
+    () =>
+      evolucion.map((e) => ({
+        periodo: e.periodo,
+        modalidad: e.modalidad ?? "",
+      })),
     [evolucion],
   );
 

@@ -6,6 +6,7 @@ from typing import Literal
 from app.domain.schemas.common import PaginatedItems, TimestampSchema
 
 EvaluacionEstado = Literal["pendiente", "procesando", "completado", "error"]
+EvaluacionModalidad = Literal["CUATRIMESTRAL", "MENSUAL", "B2B", "DESCONOCIDA"]
 
 
 class EvaluacionRead(TimestampSchema):
@@ -13,7 +14,9 @@ class EvaluacionRead(TimestampSchema):
     documento_id: uuid.UUID
     docente_nombre: str
     periodo: str
-    modalidad: str
+    modalidad: EvaluacionModalidad
+    año: int
+    periodo_orden: int
     materia: str | None
     puntaje_general: float | None
     resumen_ia: str | None

@@ -57,12 +57,13 @@ class Alerta(UUIDMixin, TimestampMixin, Base):
 
     # ── Table-level constraints & indexes ───────────────────────────────
     __table_args__ = (
-        # Dedup [AL-40]: one alert per docente+curso+periodo+type
+        # Dedup [AL-40] + [AL-10]: one alert per docente+curso+periodo+tipo+modalidad
         UniqueConstraint(
             "docente_nombre",
             "curso",
             "periodo",
             "tipo_alerta",
+            "modalidad",
             name="uq_alertas_dedup",
         ),
         # Query patterns

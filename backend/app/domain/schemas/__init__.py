@@ -1,24 +1,25 @@
 from app.domain.schemas.analytics import (
-                                          DimensionPromedio,
-                                          DocentePromedio,
-                                          PeriodoMetrica,
-                                          RankingDocente,
-                                          ResumenGeneral,
+    DimensionPromedio,
+    DocentePromedio,
+    PeriodoMetrica,
+    PeriodoOption,
+    RankingDocente,
+    ResumenGeneral,
 )
 from app.domain.schemas.common import (
-                                          BaseSchema,
-                                          ErrorResponse,
-                                          HealthResponse,
-                                          PaginatedItems,
-                                          PaginatedResponse,
+    BaseSchema,
+    ErrorResponse,
+    HealthResponse,
+    PaginatedItems,
+    PaginatedResponse,
 )
 from app.domain.schemas.documento import (
-                                          DocumentoCreate,
-                                          DocumentoFilterParams,
-                                          DocumentoList,
-                                          DocumentoRead,
-                                          DocumentoSortField,
-                                          DocumentoUploadResponse,
+    DocumentoCreate,
+    DocumentoFilterParams,
+    DocumentoList,
+    DocumentoRead,
+    DocumentoSortField,
+    DocumentoUploadResponse,
 )
 from app.domain.schemas.evaluacion import EvaluacionList, EvaluacionRead
 
@@ -39,6 +40,7 @@ __all__ = [
     "PaginatedItems",
     "PaginatedResponse",
     "PeriodoMetrica",
+    "PeriodoOption",
     "RankingDocente",
     "ResumenGeneral",
 ]

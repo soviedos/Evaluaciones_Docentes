@@ -1,17 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  ALERT_THRESHOLDS,
   compareSeveridad,
-  DROP_THRESHOLDS,
-  isModalidad,
-  isValidPeriodo,
   MODALIDADES,
-  modalidadFromPeriodo,
   modalidadLabel,
   SENTIMIENTOS,
   sentimientoColor,
   sentimientoLabel,
   sentimientoTextClass,
+  sentimientoBadgeStyle,
   severidadBadgeVariant,
   severidadClasses,
   severidadLabel,
@@ -20,6 +16,7 @@ import {
   temaLabel,
   tipoAlertaLabel,
   tipoComentarioLabel,
+  tipoComentarioBadgeStyle,
   alertaEstadoLabel,
 } from "@/lib/business-rules";
 
@@ -43,57 +40,10 @@ describe("Modalidad helpers", () => {
     expect(modalidadLabel("B2B")).toBe("B2B");
     expect(modalidadLabel("DESCONOCIDA")).toBe("Desconocida");
   });
-
-  it("isModalidad validates known values", () => {
-    expect(isModalidad("CUATRIMESTRAL")).toBe(true);
-    expect(isModalidad("MENSUAL")).toBe(true);
-    expect(isModalidad("B2B")).toBe(true);
-    expect(isModalidad("DESCONOCIDA")).toBe(false);
-    expect(isModalidad("garbage")).toBe(false);
-  });
 });
 
-// ════════════════════════════════════════════════════════════════
-//  Periodo validation
-// ════════════════════════════════════════════════════════════════
-
-describe("Periodo validation", () => {
-  it.each([
-    "C1 2025",
-    "C3 2024",
-    "M1 2026",
-    "M10 2025",
-    "MT3 2024",
-    "B2B-EMPRESA-2025",
-    "B2B Microsoft 2026",
-  ])("isValidPeriodo('%s') is true", (p) => {
-    expect(isValidPeriodo(p)).toBe(true);
-  });
-
-  it.each(["garbage", "", "X1 2025", "C4 2025", "2025"])(
-    "isValidPeriodo('%s') is false",
-    (p) => {
-      expect(isValidPeriodo(p)).toBe(false);
-    },
-  );
-
-  it("modalidadFromPeriodo infers cuatrimestral", () => {
-    expect(modalidadFromPeriodo("C2 2025")).toBe("CUATRIMESTRAL");
-  });
-
-  it("modalidadFromPeriodo infers mensual", () => {
-    expect(modalidadFromPeriodo("M10 2024")).toBe("MENSUAL");
-    expect(modalidadFromPeriodo("MT3 2026")).toBe("MENSUAL");
-  });
-
-  it("modalidadFromPeriodo infers B2B", () => {
-    expect(modalidadFromPeriodo("B2B-EMPRESA-2025")).toBe("B2B");
-  });
-
-  it("modalidadFromPeriodo returns DESCONOCIDA for unknown", () => {
-    expect(modalidadFromPeriodo("garbage")).toBe("DESCONOCIDA");
-  });
-});
+// Period validation and modalidad inference are now handled
+// exclusively by the backend (see backend/app/domain/periodo.py).
 
 // ════════════════════════════════════════════════════════════════
 //  Severidad
@@ -133,26 +83,8 @@ describe("Severidad helpers", () => {
 //  Alert thresholds
 // ════════════════════════════════════════════════════════════════
 
-describe("Alert thresholds [AL-20, AL-21]", () => {
-  it("absolute thresholds descend", () => {
-    expect(ALERT_THRESHOLDS.HIGH).toBeLessThan(ALERT_THRESHOLDS.MEDIUM);
-    expect(ALERT_THRESHOLDS.MEDIUM).toBeLessThan(ALERT_THRESHOLDS.LOW);
-  });
-
-  it("drop thresholds descend", () => {
-    expect(DROP_THRESHOLDS.HIGH).toBeGreaterThan(DROP_THRESHOLDS.MEDIUM);
-    expect(DROP_THRESHOLDS.MEDIUM).toBeGreaterThan(DROP_THRESHOLDS.LOW);
-  });
-
-  it("matches backend constants", () => {
-    expect(ALERT_THRESHOLDS.HIGH).toBe(60.0);
-    expect(ALERT_THRESHOLDS.MEDIUM).toBe(70.0);
-    expect(ALERT_THRESHOLDS.LOW).toBe(80.0);
-    expect(DROP_THRESHOLDS.HIGH).toBe(15.0);
-    expect(DROP_THRESHOLDS.MEDIUM).toBe(10.0);
-    expect(DROP_THRESHOLDS.LOW).toBe(5.0);
-  });
-});
+// Alert thresholds are backend-only (backend/app/domain/alert_rules.py).
+// No frontend constants to test.
 
 // ════════════════════════════════════════════════════════════════
 //  Tipo de alerta
@@ -237,5 +169,24 @@ describe("Tipo comentario labels [BR-CLAS-01]", () => {
     expect(tipoComentarioLabel("fortaleza")).toBe("Fortaleza");
     expect(tipoComentarioLabel("mejora")).toBe("Mejora");
     expect(tipoComentarioLabel("observacion")).toBe("Observación");
+  });
+});
+
+// ════════════════════════════════════════════════════════════════
+//  Badge styles
+// ════════════════════════════════════════════════════════════════
+
+describe("Badge style helpers", () => {
+  it("sentimientoBadgeStyle returns label and classes", () => {
+    const style = sentimientoBadgeStyle("positivo");
+    expect(style.label).toBe("Positivo");
+    expect(style.color).toContain("emerald");
+    expect(style.bg).toContain("emerald");
+  });
+
+  it("tipoComentarioBadgeStyle returns label and classes", () => {
+    const style = tipoComentarioBadgeStyle("fortaleza");
+    expect(style.label).toBe("Fortaleza");
+    expect(style.color).toContain("emerald");
   });
 });

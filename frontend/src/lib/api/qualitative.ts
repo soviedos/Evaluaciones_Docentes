@@ -20,6 +20,7 @@ export async function fetchFiltrosCualitativos(
 
 export async function fetchResumenCualitativo(
   params: {
+    modalidad?: string;
     periodo?: string;
     docente?: string;
     asignatura?: string;
@@ -35,6 +36,7 @@ export async function fetchResumenCualitativo(
 
 export async function fetchComentarios(
   params: {
+    modalidad?: string;
     periodo?: string;
     docente?: string;
     asignatura?: string;
@@ -55,6 +57,7 @@ export async function fetchComentarios(
 
 export async function fetchDistribucionTemas(
   params: {
+    modalidad?: string;
     periodo?: string;
     docente?: string;
     asignatura?: string;
@@ -71,6 +74,7 @@ export async function fetchDistribucionTemas(
 
 export async function fetchDistribucionSentimiento(
   params: {
+    modalidad?: string;
     periodo?: string;
     docente?: string;
     asignatura?: string;
@@ -88,6 +92,7 @@ export async function fetchDistribucionSentimiento(
 
 export async function fetchNubePalabras(
   params: {
+    modalidad?: string;
     periodo?: string;
     docente?: string;
     asignatura?: string;

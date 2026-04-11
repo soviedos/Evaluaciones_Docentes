@@ -57,7 +57,9 @@ class AlertaRepository(BaseRepository[Alerta]):
         Returns ``{periodo: {(docente, curso): snapshot, …}, …}``.
 
         A single query with ``GROUP BY`` + conditional aggregation avoids
-        N+1 queries against ``comentario_analisis``.
+        N+1 queries against ``comentario_analisis``.  Multiple evaluations
+        for the same docente+curso+periodo are aggregated (AVG puntaje,
+        SUM comment counts).
         """
         if not periodos:
             return {}
@@ -107,29 +109,39 @@ class AlertaRepository(BaseRepository[Alerta]):
         )
 
         # Main query: evaluaciones LEFT JOIN comment_agg
+        # GROUP BY docente+curso+periodo+modalidad to aggregate multiple
+        # evaluations for the same combination [AL-10].
         stmt = (
             select(
-                Evaluacion.id.label("evaluacion_id"),
+                func.max(Evaluacion.id).label("evaluacion_id"),
                 Evaluacion.docente_nombre,
-                Evaluacion.materia.label("curso"),
+                func.coalesce(Evaluacion.materia, literal("SIN CURSO")).label("curso"),
                 Evaluacion.periodo,
                 Evaluacion.modalidad,
-                Evaluacion.puntaje_general,
-                func.coalesce(comment_agg.c.total_comentarios, 0).label("total_comentarios"),
-                func.coalesce(comment_agg.c.negativos_count, 0).label("negativos_count"),
-                func.coalesce(comment_agg.c.mejora_negativo_count, 0).label(
+                func.avg(Evaluacion.puntaje_general).label("puntaje_general"),
+                func.coalesce(func.sum(comment_agg.c.total_comentarios), 0).label(
+                    "total_comentarios"
+                ),
+                func.coalesce(func.sum(comment_agg.c.negativos_count), 0).label("negativos_count"),
+                func.coalesce(func.sum(comment_agg.c.mejora_negativo_count), 0).label(
                     "mejora_negativo_count"
                 ),
-                func.coalesce(comment_agg.c.actitud_negativo_count, 0).label(
+                func.coalesce(func.sum(comment_agg.c.actitud_negativo_count), 0).label(
                     "actitud_negativo_count"
                 ),
-                func.coalesce(comment_agg.c.otro_count, 0).label("otro_count"),
+                func.coalesce(func.sum(comment_agg.c.otro_count), 0).label("otro_count"),
             )
             .outerjoin(comment_agg, Evaluacion.id == comment_agg.c.eval_id)
             .where(
                 Evaluacion.estado == "completado",
                 Evaluacion.modalidad == modalidad,
                 Evaluacion.periodo.in_(periodos),
+            )
+            .group_by(
+                Evaluacion.docente_nombre,
+                Evaluacion.materia,
+                Evaluacion.periodo,
+                Evaluacion.modalidad,
             )
         )
         result = await self.session.execute(stmt)
@@ -139,7 +151,7 @@ class AlertaRepository(BaseRepository[Alerta]):
         }
 
         for row in result.mappings():
-            curso = row["curso"] or "SIN CURSO"
+            curso = row["curso"]
             snap = DocenteCursoSnapshot(
                 evaluacion_id=row["evaluacion_id"],
                 docente_nombre=row["docente_nombre"],
@@ -149,11 +161,11 @@ class AlertaRepository(BaseRepository[Alerta]):
                 puntaje_general=(
                     float(row["puntaje_general"]) if row["puntaje_general"] is not None else None
                 ),
-                total_comentarios=row["total_comentarios"],
-                negativos_count=row["negativos_count"],
-                mejora_negativo_count=row["mejora_negativo_count"],
-                actitud_negativo_count=row["actitud_negativo_count"],
-                otro_count=row["otro_count"],
+                total_comentarios=int(row["total_comentarios"]),
+                negativos_count=int(row["negativos_count"]),
+                mejora_negativo_count=int(row["mejora_negativo_count"]),
+                actitud_negativo_count=int(row["actitud_negativo_count"]),
+                otro_count=int(row["otro_count"]),
             )
             key = (snap.docente_nombre, snap.curso)
             snapshots[snap.periodo][key] = snap

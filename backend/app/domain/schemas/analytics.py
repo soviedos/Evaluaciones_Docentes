@@ -36,8 +36,16 @@ class PeriodoMetrica(BaseSchema):
     """One data point for the historical trend line."""
 
     periodo: str
+    modalidad: str | None = None
     promedio: float
     evaluaciones_count: int = Field(default=0)
+
+
+class PeriodoOption(BaseSchema):
+    """A distinct periodo + modalidad pair for filter dropdowns."""
+
+    periodo: str
+    modalidad: str
 
 
 class RankingDocente(BaseSchema):
