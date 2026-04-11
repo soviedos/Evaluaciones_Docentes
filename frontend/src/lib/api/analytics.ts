@@ -4,7 +4,6 @@ import type {
   DimensionPromedio,
   DocentePromedio,
   PeriodoMetrica,
-  PeriodoOption,
   RankingDocente,
   ResumenGeneral,
 } from "@/types";
@@ -100,16 +99,6 @@ export async function fetchCursos(
 ): Promise<string[]> {
   return apiClient.get<string[]>(
     `/api/v1/analytics/cursos${buildQuery(params)}`,
-    signal,
-  );
-}
-
-export async function fetchPeriodos(
-  params: { modalidad?: string },
-  signal?: AbortSignal,
-): Promise<PeriodoOption[]> {
-  return apiClient.get<PeriodoOption[]>(
-    `/api/v1/analytics/periodos${buildQuery(params)}`,
     signal,
   );
 }

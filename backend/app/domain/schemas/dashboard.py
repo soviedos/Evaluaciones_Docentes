@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pydantic import Field
 
+from app.domain.schemas.analytics import PeriodoMetrica
 from app.domain.schemas.common import BaseSchema
 
 
@@ -55,7 +56,7 @@ class DashboardSummary(BaseSchema):
 
     kpis: DashboardKpis
     alertas: list[AlertaDocente] = Field(default_factory=list)
-    tendencia: list[dict] = Field(default_factory=list)  # PeriodoMetrica-compatible dicts
+    tendencia: list[PeriodoMetrica] = Field(default_factory=list)
     top_docentes: list[DocenteResumen] = Field(default_factory=list)
     bottom_docentes: list[DocenteResumen] = Field(default_factory=list)
     insights: list[InsightItem] = Field(default_factory=list)

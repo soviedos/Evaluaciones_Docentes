@@ -28,13 +28,3 @@ export async function fetchAlerts(
     signal,
   );
 }
-
-export async function patchAlertEstado(
-  alertaId: string,
-  estado: string,
-): Promise<AlertaResponse> {
-  return apiClient.patch<AlertaResponse>(
-    `/api/v1/alertas/${alertaId}/estado?estado=${encodeURIComponent(estado)}`,
-    {},
-  );
-}

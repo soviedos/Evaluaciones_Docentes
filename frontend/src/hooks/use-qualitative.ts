@@ -15,6 +15,7 @@ import type {
 } from "@/types";
 
 export interface QualitativeFilters {
+  modalidad?: string;
   periodo?: string;
   docente?: string;
   asignatura?: string;
@@ -62,6 +63,7 @@ export function useQualitative(filters: QualitativeFilters = {}) {
       const [resumen, comentarios, temas, sentimientos] = await Promise.all([
         fetchResumenCualitativo(
           {
+            modalidad: f.modalidad,
             periodo: f.periodo,
             docente: f.docente,
             asignatura: f.asignatura,
@@ -71,6 +73,7 @@ export function useQualitative(filters: QualitativeFilters = {}) {
         ),
         fetchComentarios(
           {
+            modalidad: f.modalidad,
             periodo: f.periodo,
             docente: f.docente,
             asignatura: f.asignatura,
@@ -84,6 +87,7 @@ export function useQualitative(filters: QualitativeFilters = {}) {
         ),
         fetchDistribucionTemas(
           {
+            modalidad: f.modalidad,
             periodo: f.periodo,
             docente: f.docente,
             asignatura: f.asignatura,
@@ -94,6 +98,7 @@ export function useQualitative(filters: QualitativeFilters = {}) {
         ),
         fetchDistribucionSentimiento(
           {
+            modalidad: f.modalidad,
             periodo: f.periodo,
             docente: f.docente,
             asignatura: f.asignatura,

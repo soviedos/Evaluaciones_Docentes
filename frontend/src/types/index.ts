@@ -17,40 +17,6 @@ export interface Documento {
 }
 
 // =============================================
-// Evaluación (datos extraídos y analizados)
-// =============================================
-
-export type EvaluacionEstado =
-  | "pendiente"
-  | "procesando"
-  | "completado"
-  | "error";
-
-export interface Evaluacion {
-  id: string;
-  documento_id: string;
-  docente_id: string;
-  periodo: string;
-  materia: string | null;
-  puntaje_general: number | null;
-  resumen_ia: string | null;
-  estado: EvaluacionEstado;
-  created_at: string;
-  updated_at: string;
-}
-
-// =============================================
-// Docente
-// =============================================
-
-export interface Docente {
-  id: string;
-  nombre: string;
-  facultad: string | null;
-  departamento: string | null;
-}
-
-// =============================================
 // API Responses
 // =============================================
 
@@ -60,11 +26,6 @@ export interface PaginatedResponse<T> {
   page: number;
   page_size: number;
   total_pages: number;
-}
-
-export interface ApiError {
-  detail: string;
-  status_code: number;
 }
 
 // =============================================
@@ -355,21 +316,21 @@ export interface AlertaResponse {
 
 export interface AlertaSummary {
   total_activas: number;
-  por_severidad: Record<string, number>;
-  por_tipo: Record<string, number>;
-  por_modalidad: Record<string, number>;
+  por_severidad: Partial<Record<Severidad, number>>;
+  por_tipo: Partial<Record<TipoAlerta, number>>;
+  por_modalidad: Partial<Record<Modalidad, number>>;
   docentes_afectados: number;
 }
 
 export interface AlertFilters {
-  modalidad?: string;
+  modalidad?: Modalidad;
   anio?: number;
   periodo?: string;
-  severidad?: string;
-  estado?: string;
+  severidad?: Severidad;
+  estado?: AlertaEstado;
   docente?: string;
   curso?: string;
-  tipo_alerta?: string;
+  tipo_alerta?: TipoAlerta;
   page?: number;
   page_size?: number;
 }
