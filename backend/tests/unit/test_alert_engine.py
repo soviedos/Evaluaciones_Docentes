@@ -89,8 +89,8 @@ class TestAlertEngineDetect:
         engine = AlertEngine(db, detectors=[_StubDetector(), _StubDetector()])
         snap_actual = {("Prof. García", "ISW-101"): _snap()}
         candidates = engine._detect(snap_actual, {})
-        # 2 detectors × 1 docente-curso = 2 candidates
-        assert len(candidates) == 2
+        # 2 detectors with identical dedup key → in-memory dedup keeps 1
+        assert len(candidates) == 1
 
     def test_no_candidates_when_empty_snapshots(self):
         db = AsyncMock()

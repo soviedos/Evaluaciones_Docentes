@@ -4,10 +4,17 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import Field
 
 from app.domain.schemas.common import BaseSchema, PaginatedItems
+
+# Constrained types aligned with backend enums & DB CHECK constraints
+AlertaModalidad = Literal["CUATRIMESTRAL", "MENSUAL", "B2B"]
+AlertaTipo = Literal["BAJO_DESEMPEÑO", "CAIDA", "SENTIMIENTO", "PATRON"]
+AlertaSeveridad = Literal["alta", "media", "baja"]
+AlertaEstadoType = Literal["activa", "revisada", "resuelta", "descartada"]
 
 
 class AlertaResponse(BaseSchema):
@@ -18,14 +25,14 @@ class AlertaResponse(BaseSchema):
     docente_nombre: str
     curso: str
     periodo: str
-    modalidad: str
-    tipo_alerta: str
+    modalidad: AlertaModalidad
+    tipo_alerta: AlertaTipo
     metrica_afectada: str
     valor_actual: float
     valor_anterior: float | None = None
     descripcion: str
-    severidad: str
-    estado: str
+    severidad: AlertaSeveridad
+    estado: AlertaEstadoType
     created_at: datetime
     updated_at: datetime
 
