@@ -20,6 +20,8 @@ from app.domain.schemas.documento import (
     DocumentoRead,
     DocumentoSortField,
     DocumentoUploadResponse,
+    DuplicadoRead,
+    DuplicadoResumen,
 )
 from app.domain.schemas.evaluacion import EvaluacionList, EvaluacionRead
 
@@ -33,6 +35,8 @@ __all__ = [
     "DocumentoRead",
     "DocumentoSortField",
     "DocumentoUploadResponse",
+    "DuplicadoRead",
+    "DuplicadoResumen",
     "ErrorResponse",
     "EvaluacionList",
     "EvaluacionRead",

@@ -28,6 +28,17 @@ class DocumentoEstado(StrEnum):
     ERROR = "error"
 
 
+# ── Probable-duplicate finding states ────────────────────────────────────
+
+
+class DuplicadoEstado(StrEnum):
+    """Resolution state for a probable-duplicate finding."""
+
+    PENDIENTE = "pendiente"  # Awaiting human review
+    CONFIRMADO = "confirmado"  # User confirmed it is a real duplicate
+    DESCARTADO = "descartado"  # User determined it is NOT a duplicate
+
+
 # ── Evaluation states [§2.2 - evaluación FSM] ───────────────────────────
 
 

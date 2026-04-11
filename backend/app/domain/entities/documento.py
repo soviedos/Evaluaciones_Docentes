@@ -15,3 +15,15 @@ class Documento(UUIDMixin, TimestampMixin, Base):
     estado: Mapped[str] = mapped_column(String(20), nullable=False, default="subido")
     tamano_bytes: Mapped[int | None] = mapped_column(nullable=True)
     error_detalle: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # ── Probabilistic dedup — populated after successful parsing ────
+    content_fingerprint: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        index=True,
+    )
+    posible_duplicado: Mapped[bool] = mapped_column(
+        nullable=False,
+        default=False,
+        server_default="false",
+    )

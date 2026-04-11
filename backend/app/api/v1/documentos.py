@@ -1,13 +1,18 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
-from fastapi.responses import Response
+import uuid
 
 from app.api.deps import DbSession, FileStorageDep, get_gemini_gateway
 from app.application.services.document_service import DocumentService
 from app.application.services.processing_service import ProcessingService
 from app.domain.exceptions import GeminiUnavailableError
-from app.domain.schemas import DocumentoFilterParams, DocumentoList, DocumentoUploadResponse
+from app.domain.schemas import (DocumentoFilterParams, DocumentoList,
+                                DocumentoUploadResponse)
+from app.domain.schemas.documento import DuplicadoDocumentoRef, DuplicadoRead
 from app.infrastructure.external.gemini_gateway import GeminiGateway
 from app.infrastructure.repositories.documento import DocumentoRepository
+from app.infrastructure.repositories.duplicado_repo import DuplicadoRepository
+from fastapi import (APIRouter, BackgroundTasks, Depends, HTTPException,
+                     UploadFile)
+from fastapi.responses import Response
 
 router = APIRouter()
 
@@ -66,13 +71,56 @@ async def delete_documento(
     storage: FileStorageDep,
 ):
     """Eliminar un documento y todos sus datos asociados (evaluaciones, comentarios, etc.)."""
-    import uuid
-
     doc_uuid = uuid.UUID(documento_id)
     repo = DocumentoRepository(db)
     service = DocumentService(repo, storage)
     await service.delete_document(doc_uuid)
     await db.commit()
+
+
+@router.get("/{documento_id}/duplicados", response_model=list[DuplicadoRead])
+async def list_duplicados(
+    documento_id: str,
+    db: DbSession,
+):
+    """Listar los duplicados probables asociados a un documento."""
+    doc_uuid = uuid.UUID(documento_id)
+    doc_repo = DocumentoRepository(db)
+
+    documento = await doc_repo.get_by_id(doc_uuid)
+    if documento is None:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    dup_repo = DuplicadoRepository(db)
+    findings = await dup_repo.list_by_documento(doc_uuid)
+
+    results = []
+    for f in findings:
+        # Resolve the "other" document reference
+        if f.documento_id == doc_uuid:
+            other = f.documento_coincidente
+        else:
+            other = f.documento
+
+        results.append(
+            DuplicadoRead(
+                id=f.id,
+                documento_id=f.documento_id,
+                documento_coincidente_id=f.documento_coincidente_id,
+                documento_coincidente=DuplicadoDocumentoRef(
+                    id=other.id,
+                    nombre_archivo=other.nombre_archivo,
+                ),
+                fingerprint=f.fingerprint,
+                score=float(f.score),
+                criterios=f.criterios,
+                estado=f.estado,
+                notas=f.notas,
+                created_at=f.created_at,
+                updated_at=f.updated_at,
+            )
+        )
+    return results
 
 
 @router.get("/{documento_id}/download")
@@ -82,8 +130,6 @@ async def download_documento(
     storage: FileStorageDep,
 ):
     """Descargar el archivo PDF original de un documento."""
-    import uuid
-
     doc_uuid = uuid.UUID(documento_id)
     repo = DocumentoRepository(db)
     documento = await repo.get_by_id(doc_uuid)
@@ -97,4 +143,5 @@ async def download_documento(
         headers={
             "Content-Disposition": f'inline; filename="{documento.nombre_archivo}"',
         },
+    )
     )

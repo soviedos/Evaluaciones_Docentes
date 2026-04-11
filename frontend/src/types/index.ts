@@ -12,6 +12,33 @@ export interface Documento {
   storage_path: string;
   tamano_bytes: number | null;
   error_detalle: string | null;
+  content_fingerprint: string | null;
+  posible_duplicado: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// =============================================
+// Duplicados probables
+// =============================================
+
+export type DuplicadoEstado = "pendiente" | "confirmado" | "descartado";
+
+export interface DuplicadoDocumentoRef {
+  id: string;
+  nombre_archivo: string;
+}
+
+export interface DuplicadoRead {
+  id: string;
+  documento_id: string;
+  documento_coincidente_id: string;
+  documento_coincidente: DuplicadoDocumentoRef;
+  fingerprint: string;
+  score: number;
+  criterios: Record<string, unknown>;
+  estado: DuplicadoEstado;
+  notas: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -48,6 +75,7 @@ export interface DocumentoFilterParams {
   docente?: string;
   periodo?: string;
   nombre_archivo?: string;
+  posible_duplicado?: boolean;
 }
 
 // =============================================

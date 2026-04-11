@@ -44,10 +44,16 @@ class DocumentoRepository(BaseRepository[Documento]):
         docente: str | None = None,
         periodo: str | None = None,
         nombre_archivo: str | None = None,
+        posible_duplicado: bool | None = None,
     ) -> list[Documento]:
         stmt = select(Documento)
         stmt = self._apply_filters(
-            stmt, estado=estado, docente=docente, periodo=periodo, nombre_archivo=nombre_archivo
+            stmt,
+            estado=estado,
+            docente=docente,
+            periodo=periodo,
+            nombre_archivo=nombre_archivo,
+            posible_duplicado=posible_duplicado,
         )
         column = SORT_FIELDS.get(sort_by, Documento.created_at)
         stmt = stmt.order_by(column.desc() if sort_order == "desc" else column.asc())
@@ -62,10 +68,16 @@ class DocumentoRepository(BaseRepository[Documento]):
         docente: str | None = None,
         periodo: str | None = None,
         nombre_archivo: str | None = None,
+        posible_duplicado: bool | None = None,
     ) -> int:
         stmt = select(func.count()).select_from(Documento)
         stmt = self._apply_filters(
-            stmt, estado=estado, docente=docente, periodo=periodo, nombre_archivo=nombre_archivo
+            stmt,
+            estado=estado,
+            docente=docente,
+            periodo=periodo,
+            nombre_archivo=nombre_archivo,
+            posible_duplicado=posible_duplicado,
         )
         result = await self.session.execute(stmt)
         return result.scalar_one()
@@ -78,11 +90,14 @@ class DocumentoRepository(BaseRepository[Documento]):
         docente: str | None,
         periodo: str | None,
         nombre_archivo: str | None,
+        posible_duplicado: bool | None = None,
     ):
         if estado:
             stmt = stmt.where(Documento.estado == estado)
         if nombre_archivo:
             stmt = stmt.where(Documento.nombre_archivo.ilike(f"%{nombre_archivo}%"))
+        if posible_duplicado is not None:
+            stmt = stmt.where(Documento.posible_duplicado == posible_duplicado)
         if docente or periodo:
             conditions = [Evaluacion.documento_id == Documento.id]
             if docente:

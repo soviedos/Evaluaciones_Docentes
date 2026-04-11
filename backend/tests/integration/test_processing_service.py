@@ -9,6 +9,7 @@ import uuid
 from unittest.mock import patch
 
 import pytest
+from sqlalchemy import select
 
 from app.application.parsing.errors import ParseError, ParseMetadata, ParseResult
 from app.application.parsing.schemas import (
@@ -24,9 +25,11 @@ from app.application.parsing.schemas import (
 )
 from app.application.services.processing_service import ProcessingService
 from app.domain.entities.comentario_analisis import ComentarioAnalisis
+from app.domain.entities.duplicado_probable import DuplicadoProbable
+from app.domain.fingerprint import compute_content_fingerprint
 from app.infrastructure.repositories.documento import DocumentoRepository
 from app.infrastructure.repositories.evaluacion import EvaluacionRepository
-from tests.fixtures.factories import make_documento
+from tests.fixtures.factories import make_documento, make_evaluacion
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -298,8 +301,6 @@ class TestProcessingServiceCommentLength:
             svc = ProcessingService(db, fake_storage)
             await svc.process_document(doc.id)
 
-        from sqlalchemy import select
-
         rows = (await db.execute(select(ComentarioAnalisis))).scalars().all()
         assert len(rows) == 1
         assert rows[0].texto == "Buen profesor"
@@ -312,7 +313,210 @@ class TestProcessingServiceCommentLength:
             svc = ProcessingService(db, fake_storage)
             await svc.process_document(doc.id)
 
-        from sqlalchemy import select
-
         rows = (await db.execute(select(ComentarioAnalisis))).scalars().all()
         assert len(rows) == 0
+
+
+# ---------------------------------------------------------------------------
+# Duplicate detection during processing
+# ---------------------------------------------------------------------------
+
+
+def _make_successful_result_for_docente(
+    docente: str = "JUAN PÉREZ MORA",
+    periodo: str = "C2 2025",
+    modalidad: str = "CUATRIMESTRAL",
+    año: int = 2025,
+    periodo_orden: int = 2,
+) -> ParseResult:
+    """Build a successful ParseResult with customisable identity fields."""
+    fp = FuentePuntaje(puntos_obtenidos=18.0, puntos_maximos=20.0, porcentaje=90.0)
+    dim = DimensionMetrica(
+        nombre="METODOLOGÍA",
+        estudiante=fp,
+        director=fp,
+        autoevaluacion=fp,
+        promedio_general_puntos=18.0,
+        promedio_general_pct=90.0,
+    )
+    curso = CursoGrupo(
+        escuela="ESC ING DEL SOFTWARE",
+        codigo="INF-02",
+        nombre="Fundamentos de Programación",
+        estudiantes_respondieron=13,
+        estudiantes_matriculados=15,
+        grupo="SCV0",
+        pct_estudiante=92.75,
+        pct_director=100.0,
+        pct_autoevaluacion=82.60,
+        pct_promedio_general=91.78,
+    )
+    data = ParsedEvaluacion(
+        header=HeaderData(
+            profesor_nombre=docente,
+            periodo=periodo,
+            recinto="TODOS",
+        ),
+        periodo_data=PeriodoData(
+            periodo_raw=periodo,
+            periodo_normalizado=periodo,
+            modalidad=modalidad,
+            año=año,
+            periodo_orden=periodo_orden,
+            prefijo=periodo[0],
+            numero=periodo_orden,
+        ),
+        dimensiones=[dim],
+        resumen_pct=ResumenPorcentajes(
+            estudiante=92.0,
+            director=100.0,
+            autoevaluacion=79.60,
+            promedio_general=90.53,
+        ),
+        cursos=[curso],
+        total_respondieron=13,
+        total_matriculados=15,
+        secciones_comentarios=[],
+    )
+    return ParseResult(
+        success=True,
+        data=data,
+        metadata=ParseMetadata(parser_version="1.0.0", pages_processed=2),
+    )
+
+
+@pytest.mark.asyncio
+class TestProcessingServiceDuplicateDetection:
+    """Verify duplicate detection runs as Step 5 of the processing pipeline."""
+
+    async def test_duplicate_sets_posible_duplicado_flag(self, db, fake_storage):
+        """When a previously processed doc has the same fingerprint,
+        the new document's posible_duplicado flag is set to True."""
+        result = _make_successful_result_for_docente()
+
+        # ── Set up an existing processed document with the same fingerprint ─
+        fp = compute_content_fingerprint(result.data)
+        doc_repo = DocumentoRepository(db)
+        eval_repo = EvaluacionRepository(db)
+
+        existing = await doc_repo.create(
+            make_documento(estado="procesado", content_fingerprint=fp.fingerprint)
+        )
+        await eval_repo.create(
+            make_evaluacion(
+                documento_id=existing.id,
+                docente_nombre="JUAN PÉREZ MORA",
+                periodo="C2 2025",
+                modalidad="CUATRIMESTRAL",
+                año=2025,
+                periodo_orden=2,
+                estado="completado",
+            )
+        )
+
+        # ── Process a new document that produces the same fingerprint ──
+        new_doc = await _setup_document(db, fake_storage)
+
+        with patch(PARSER_PATH, return_value=result):
+            svc = ProcessingService(db, fake_storage)
+            await svc.process_document(new_doc.id)
+
+        await db.refresh(new_doc)
+        assert new_doc.estado == "procesado"
+        assert new_doc.posible_duplicado is True
+        assert new_doc.content_fingerprint == fp.fingerprint
+
+    async def test_duplicate_creates_finding_record(self, db, fake_storage):
+        """A DuplicadoProbable record is created linking the two documents."""
+        result = _make_successful_result_for_docente()
+        fp = compute_content_fingerprint(result.data)
+
+        doc_repo = DocumentoRepository(db)
+        eval_repo = EvaluacionRepository(db)
+
+        existing = await doc_repo.create(
+            make_documento(estado="procesado", content_fingerprint=fp.fingerprint)
+        )
+        await eval_repo.create(
+            make_evaluacion(
+                documento_id=existing.id,
+                docente_nombre="JUAN PÉREZ MORA",
+                periodo="C2 2025",
+                modalidad="CUATRIMESTRAL",
+                año=2025,
+                periodo_orden=2,
+                estado="completado",
+            )
+        )
+
+        new_doc = await _setup_document(db, fake_storage)
+
+        with patch(PARSER_PATH, return_value=result):
+            svc = ProcessingService(db, fake_storage)
+            await svc.process_document(new_doc.id)
+
+        findings = (await db.execute(select(DuplicadoProbable))).scalars().all()
+        assert len(findings) == 1
+        assert findings[0].documento_id == new_doc.id
+        assert findings[0].documento_coincidente_id == existing.id
+        assert float(findings[0].score) == 1.0
+        assert findings[0].estado == "pendiente"
+
+    async def test_no_duplicate_when_different_content(self, db, fake_storage):
+        """When the existing doc has a different fingerprint, no finding is created."""
+        result = _make_successful_result_for_docente()
+
+        doc_repo = DocumentoRepository(db)
+        eval_repo = EvaluacionRepository(db)
+
+        existing = await doc_repo.create(
+            make_documento(estado="procesado", content_fingerprint="a" * 64)
+        )
+        await eval_repo.create(
+            make_evaluacion(
+                documento_id=existing.id,
+                docente_nombre="JUAN PÉREZ MORA",
+                periodo="C2 2025",
+                modalidad="CUATRIMESTRAL",
+                año=2025,
+                periodo_orden=2,
+                estado="completado",
+            )
+        )
+
+        new_doc = await _setup_document(db, fake_storage)
+
+        with patch(PARSER_PATH, return_value=result):
+            svc = ProcessingService(db, fake_storage)
+            await svc.process_document(new_doc.id)
+
+        await db.refresh(new_doc)
+        assert new_doc.posible_duplicado is False
+
+        findings = (await db.execute(select(DuplicadoProbable))).scalars().all()
+        assert len(findings) == 0
+
+    async def test_no_duplicate_when_no_prior_documents(self, db, fake_storage):
+        """First document ever — no candidates, no flag."""
+        new_doc = await _setup_document(db, fake_storage)
+
+        with patch(PARSER_PATH, return_value=_make_successful_result_for_docente()):
+            svc = ProcessingService(db, fake_storage)
+            await svc.process_document(new_doc.id)
+
+        await db.refresh(new_doc)
+        assert new_doc.posible_duplicado is False
+        assert new_doc.content_fingerprint is not None  # fingerprint still computed
+
+    async def test_parser_failure_skips_duplicate_detection(self, db, fake_storage):
+        """When the parser fails, duplicate detection is not attempted."""
+        new_doc = await _setup_document(db, fake_storage)
+
+        with patch(PARSER_PATH, return_value=_make_failed_result()):
+            svc = ProcessingService(db, fake_storage)
+            await svc.process_document(new_doc.id)
+
+        await db.refresh(new_doc)
+        assert new_doc.estado == "error"
+        assert new_doc.posible_duplicado is False
+        assert new_doc.content_fingerprint is None

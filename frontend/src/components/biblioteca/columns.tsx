@@ -6,6 +6,7 @@ import { ArrowUpDown, Copy, Check, Eye, FileText, Trash2 } from "lucide-react";
 import { getDocumentDownloadUrl } from "@/lib/api/documents";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DuplicadoBadge } from "./duplicado-badge";
 import {
   Tooltip,
   TooltipContent,
@@ -244,8 +245,16 @@ export function getColumns(
     }),
     columnHelper.accessor("estado", {
       header: "Estado",
-      cell: (info) => <EstadoBadge estado={info.getValue()} />,
-      size: 120,
+      cell: (info) => (
+        <div className="flex items-center gap-1.5">
+          <EstadoBadge estado={info.getValue()} />
+          <DuplicadoBadge
+            documentoId={info.row.original.id}
+            posibleDuplicado={info.row.original.posible_duplicado}
+          />
+        </div>
+      ),
+      size: 200,
     }),
     columnHelper.accessor("tamano_bytes", {
       header: () => (

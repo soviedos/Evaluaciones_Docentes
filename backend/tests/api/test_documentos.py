@@ -1,7 +1,10 @@
 """API tests — /api/v1/documentos endpoints."""
 
+import uuid
+
 import pytest
 
+from app.domain.entities.duplicado_probable import DuplicadoProbable
 from app.infrastructure.repositories.documento import DocumentoRepository
 from app.infrastructure.repositories.evaluacion import EvaluacionRepository
 from tests.fixtures.factories import make_documento, make_evaluacion
@@ -58,6 +61,9 @@ class TestListDocumentos:
         assert "hash_sha256" in item
         assert "estado" in item
         assert "created_at" in item
+        assert "content_fingerprint" in item
+        assert "posible_duplicado" in item
+        assert item["posible_duplicado"] is False
 
 
 class TestListDocumentosFilters:
@@ -147,6 +153,28 @@ class TestListDocumentosFilters:
         assert data["total"] == 0
         assert data["items"] == []
 
+    async def test_filter_by_posible_duplicado_true(self, client, db):
+        repo = DocumentoRepository(db)
+        await repo.create(make_documento(posible_duplicado=True))
+        await repo.create(make_documento(posible_duplicado=False))
+
+        response = await client.get("/api/v1/documentos/?posible_duplicado=true")
+
+        data = response.json()
+        assert data["total"] == 1
+        assert data["items"][0]["posible_duplicado"] is True
+
+    async def test_filter_by_posible_duplicado_false(self, client, db):
+        repo = DocumentoRepository(db)
+        await repo.create(make_documento(posible_duplicado=True))
+        await repo.create(make_documento(posible_duplicado=False))
+
+        response = await client.get("/api/v1/documentos/?posible_duplicado=false")
+
+        data = response.json()
+        assert data["total"] == 1
+        assert data["items"][0]["posible_duplicado"] is False
+
 
 class TestListDocumentosSorting:
     async def test_sort_by_nombre_asc(self, client, db):
@@ -155,9 +183,7 @@ class TestListDocumentosSorting:
         await repo.create(make_documento(nombre_archivo="a_doc.pdf"))
         await repo.create(make_documento(nombre_archivo="b_doc.pdf"))
 
-        response = await client.get(
-            "/api/v1/documentos/?sort_by=nombre_archivo&sort_order=asc"
-        )
+        response = await client.get("/api/v1/documentos/?sort_by=nombre_archivo&sort_order=asc")
 
         names = [i["nombre_archivo"] for i in response.json()["items"]]
         assert names == ["a_doc.pdf", "b_doc.pdf", "c_doc.pdf"]
@@ -168,9 +194,7 @@ class TestListDocumentosSorting:
         await repo.create(make_documento(nombre_archivo="c_doc.pdf"))
         await repo.create(make_documento(nombre_archivo="b_doc.pdf"))
 
-        response = await client.get(
-            "/api/v1/documentos/?sort_by=nombre_archivo&sort_order=desc"
-        )
+        response = await client.get("/api/v1/documentos/?sort_by=nombre_archivo&sort_order=desc")
 
         names = [i["nombre_archivo"] for i in response.json()["items"]]
         assert names == ["c_doc.pdf", "b_doc.pdf", "a_doc.pdf"]
@@ -217,3 +241,84 @@ class TestListDocumentosValidation:
         data = response.json()
         assert data["total"] == 7
         assert data["total_pages"] == 3
+
+
+class TestListDuplicados:
+    async def test_returns_empty_when_no_duplicados(self, client, db):
+        repo = DocumentoRepository(db)
+        doc = await repo.create(make_documento())
+
+        response = await client.get(f"/api/v1/documentos/{doc.id}/duplicados")
+
+        assert response.status_code == 200
+        assert response.json() == []
+
+    async def test_returns_404_for_missing_document(self, client):
+        fake_id = uuid.uuid4()
+        response = await client.get(f"/api/v1/documentos/{fake_id}/duplicados")
+
+        assert response.status_code == 404
+
+    async def test_returns_duplicate_findings(self, client, db):
+        repo = DocumentoRepository(db)
+        doc_a = await repo.create(
+            make_documento(posible_duplicado=True, content_fingerprint="abc123" + "0" * 58)
+        )
+        doc_b = await repo.create(make_documento(content_fingerprint="abc123" + "0" * 58))
+
+        # Create a finding directly
+        finding = DuplicadoProbable(
+            documento_id=doc_a.id,
+            documento_coincidente_id=doc_b.id,
+            fingerprint="abc123" + "0" * 58,
+            score=1.0,
+            criterios={"docente_nombre": "Prof. García", "modalidad": "CUATRIMESTRAL"},
+            estado="pendiente",
+        )
+        db.add(finding)
+        await db.flush()
+
+        response = await client.get(f"/api/v1/documentos/{doc_a.id}/duplicados")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["documento_coincidente"]["id"] == str(doc_b.id)
+        assert data[0]["documento_coincidente"]["nombre_archivo"] == doc_b.nombre_archivo
+        assert data[0]["score"] == 1.0
+        assert data[0]["estado"] == "pendiente"
+        assert "criterios" in data[0]
+
+    async def test_finding_shape(self, client, db):
+        repo = DocumentoRepository(db)
+        doc_a = await repo.create(make_documento(posible_duplicado=True))
+        doc_b = await repo.create(make_documento())
+
+        finding = DuplicadoProbable(
+            documento_id=doc_a.id,
+            documento_coincidente_id=doc_b.id,
+            fingerprint="f" * 64,
+            score=0.85,
+            criterios={"docente_nombre": "X"},
+            estado="pendiente",
+        )
+        db.add(finding)
+        await db.flush()
+
+        response = await client.get(f"/api/v1/documentos/{doc_a.id}/duplicados")
+
+        item = response.json()[0]
+        expected_keys = {
+            "id",
+            "documento_id",
+            "documento_coincidente_id",
+            "documento_coincidente",
+            "fingerprint",
+            "score",
+            "criterios",
+            "estado",
+            "notas",
+            "created_at",
+            "updated_at",
+        }
+        assert set(item.keys()) == expected_keys

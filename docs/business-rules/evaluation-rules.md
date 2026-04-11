@@ -346,9 +346,38 @@ Clasificación final:
 
 ### 4.6 Reglas de deduplicación
 
-`[BR-PROC-30]` Cada PDF se identifica por su hash SHA-256. Si ya existe un documento con el mismo hash, el sistema **MUST** rechazar la carga con HTTP 409 Conflict.
+El sistema emplea **deduplicación en dos niveles**: exacta (bloqueo) y probabilística (detección sin bloqueo).
 
-`[BR-PROC-31]` La deduplicación es a nivel de archivo, no de contenido semántico. Dos PDFs con contenido idéntico pero archivos binarios distintos se procesan por separado.
+#### 4.6.1 Nivel 1 — Deduplicación exacta (SHA-256)
+
+`[BR-PROC-30]` Cada PDF se identifica por su hash SHA-256 calculado sobre los bytes del archivo. Si ya existe un documento con el mismo hash, el sistema **MUST** rechazar la carga con HTTP `409 Conflict`.
+
+`[BR-PROC-31]` La deduplicación exacta opera a nivel de archivo binario. Dos PDFs con contenido lógico idéntico pero bytes distintos (por ejemplo, re-exportados en fechas diferentes) pasan este control.
+
+#### 4.6.2 Nivel 2 — Detección de duplicados probables (firma lógica)
+
+`[BR-PROC-32]` Tras un parseo exitoso, el sistema **MUST** calcular una **firma lógica de contenido** (`content_fingerprint`) basada en los campos estructurados extraídos del PDF. La firma es un SHA-256 del siguiente vector canónico:
+
+| Campo               | Normalización                                               |
+| ------------------- | ----------------------------------------------------------- |
+| `docente_nombre`    | Minúsculas, sin acentos, espacios colapsados                |
+| `modalidad`         | Mayúsculas (`CUATRIMESTRAL`, `MENSUAL`, `B2B`)              |
+| `año`               | Entero                                                      |
+| `periodo`           | Normalizado por el parser, mayúsculas                       |
+| `cursos`            | Pares `codigo:grupo` ordenados alfabéticamente              |
+| `promedio_general`  | Redondeado a 2 decimales                                    |
+| `dimensiones`       | Pares `nombre:pct_promedio` ordenados, nombres normalizados |
+| `total_comentarios` | Conteo de campos de comentario no vacíos                    |
+
+`[BR-PROC-33]` Si otro documento ya registrado comparte el mismo `content_fingerprint`, el sistema **MUST** crear un registro en `duplicados_probables` con evidencia del match (score, criterios). El documento nuevo **MUST NOT** ser bloqueado — se procesa y persiste normalmente.
+
+`[BR-PROC-34]` Cuando se detectan uno o más duplicados probables, el campo `documentos.posible_duplicado` **MUST** marcarse como `true` en el documento recién cargado.
+
+`[BR-PROC-35]` La detección de duplicados probables es **best-effort**: si falla por cualquier motivo, el error se registra en logs pero **MUST NOT** afectar el estado final del documento (se procesa como `procesado` normalmente).
+
+`[BR-PROC-36]` Los hallazgos de duplicados probables se crean en estado `pendiente` para revisión humana. Los estados válidos son: `pendiente`, `confirmado`, `descartado`.
+
+`[BR-PROC-37]` No se implementa deduplicación semántica avanzada (embeddings, similitud coseno). La detección se basa exclusivamente en la igualdad de la firma lógica determinística.
 
 ### 4.7 Reglas de persistencia
 

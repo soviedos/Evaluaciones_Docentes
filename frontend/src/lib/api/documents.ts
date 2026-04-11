@@ -4,6 +4,7 @@ import type {
   Documento,
   DocumentoFilterParams,
   DocumentoUploadResponse,
+  DuplicadoRead,
   PaginatedResponse,
 } from "@/types";
 
@@ -30,6 +31,14 @@ export async function listPeriodos(): Promise<string[]> {
 
 export async function deleteDocument(id: string): Promise<void> {
   await apiClient.delete(`/api/v1/documentos/${id}`);
+}
+
+export async function listDuplicados(
+  documentoId: string,
+): Promise<DuplicadoRead[]> {
+  return apiClient.get<DuplicadoRead[]>(
+    `/api/v1/documentos/${documentoId}/duplicados`,
+  );
 }
 
 export function getDocumentDownloadUrl(id: string): string {
