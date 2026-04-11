@@ -10,7 +10,8 @@
 
 ### Características principales
 
-- **Carga de PDFs** con deduplicación SHA-256 y almacenamiento en MinIO
+- **Carga de PDFs** con deduplicación SHA-256 y detección de duplicados probables por firma lógica
+- **Detección de duplicados probables** — firma de contenido (docente + periodo + cursos + puntajes) sin bloquear la carga
 - **Parser determinístico** — extracción de encabezados, métricas por dimensión, cursos y comentarios
 - **Clasificación cualitativa** — detección de tema, sentimiento y tipo (fortaleza/mejora/observación)
 - **Consultas IA** — endpoint RAG que recupera métricas + comentarios y genera respuestas con Gemini

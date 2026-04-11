@@ -8,9 +8,8 @@ from pydantic import Field
 from app.domain.schemas.common import BaseSchema, PaginatedItems, TimestampSchema
 
 DocumentoEstado = Literal["subido", "procesando", "procesado", "error"]
-DocumentoSortField = Literal[
-    "created_at", "updated_at", "nombre_archivo", "estado", "tamano_bytes"
-]
+DocumentoSortField = Literal["created_at", "updated_at", "nombre_archivo", "estado", "tamano_bytes"]
+DuplicadoEstado = Literal["pendiente", "confirmado", "descartado"]
 
 
 class DocumentoCreate(BaseSchema):
@@ -18,6 +17,40 @@ class DocumentoCreate(BaseSchema):
     hash_sha256: str
     storage_path: str
     tamano_bytes: int | None = None
+
+
+# ── Duplicado DTOs ──────────────────────────────────────────────────
+
+
+class DuplicadoDocumentoRef(BaseSchema):
+    """Lightweight reference to the matching document."""
+
+    id: uuid.UUID
+    nombre_archivo: str
+
+
+class DuplicadoRead(TimestampSchema):
+    """Full duplicate-finding DTO returned by the detail endpoint."""
+
+    id: uuid.UUID
+    documento_id: uuid.UUID
+    documento_coincidente_id: uuid.UUID
+    documento_coincidente: DuplicadoDocumentoRef
+    fingerprint: str
+    score: float
+    criterios: dict
+    estado: DuplicadoEstado
+    notas: str | None
+
+
+class DuplicadoResumen(BaseSchema):
+    """Compact summary embedded in DocumentoRead."""
+
+    total: int
+    coincidencias: list[DuplicadoDocumentoRef]
+
+
+# ── Documento DTOs ──────────────────────────────────────────────────
 
 
 class DocumentoRead(TimestampSchema):
@@ -28,6 +61,8 @@ class DocumentoRead(TimestampSchema):
     estado: DocumentoEstado
     tamano_bytes: int | None
     error_detalle: str | None
+    content_fingerprint: str | None = None
+    posible_duplicado: bool = False
 
 
 class DocumentoUploadResponse(TimestampSchema):
@@ -51,3 +86,4 @@ class DocumentoFilterParams(BaseSchema):
     docente: str | None = None
     periodo: str | None = None
     nombre_archivo: str | None = None
+    posible_duplicado: bool | None = None

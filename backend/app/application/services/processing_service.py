@@ -30,6 +30,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.application.classification import classify_comment
 from app.application.parsing.errors import ParseResult
 from app.application.parsing.parser import parse_evaluacion
+from app.application.services.duplicate_detection_service import DuplicateDetectionService
 from app.application.services.gemini_enrichment_service import GeminiEnrichmentService
 from app.domain.entities.comentario_analisis import ComentarioAnalisis
 from app.domain.entities.evaluacion import Evaluacion
@@ -114,7 +115,18 @@ class ProcessingService:
 
             await self.db.flush()
 
-            # ── Step 5: Gemini enrichment (best-effort) ─────────────
+            # ── Step 5: Duplicate detection (best-effort) ───────────
+            if result.success and result.data is not None:
+                dedup = DuplicateDetectionService(self.db)
+                dup_count = await dedup.check_and_flag(doc, result.data)
+                if dup_count:
+                    logger.info(
+                        "Duplicate detection: %d finding(s) for doc %s",
+                        dup_count,
+                        documento_id,
+                    )
+
+            # ── Step 6: Gemini enrichment (best-effort) ─────────────
             if evaluacion and self._gemini_gateway:
                 try:
                     enrichment = GeminiEnrichmentService(self.db, self._gemini_gateway)
@@ -237,4 +249,5 @@ class ProcessingService:
         lines = []
         for err in result.errors:
             lines.append(f"[{err.stage}/{err.code}] {err.message}")
+        return "\n".join(lines) if lines else "Error desconocido en el parser"
         return "\n".join(lines) if lines else "Error desconocido en el parser"

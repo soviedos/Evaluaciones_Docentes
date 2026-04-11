@@ -11,11 +11,26 @@
 erDiagram
     documentos ||--o{ evaluaciones : "contiene"
     documentos ||--o{ document_processing_jobs : "tiene"
+    documentos ||--o{ duplicados_probables : "documento"
+    documentos ||--o{ duplicados_probables : "coincidente"
     evaluaciones ||--o{ evaluacion_dimensiones : "tiene"
     evaluaciones ||--o{ evaluacion_cursos : "tiene"
     evaluaciones ||--o{ comentario_analisis : "tiene"
     evaluaciones ||--o{ gemini_audit_log : "referencia"
     evaluaciones ||--o{ alertas : "genera"
+
+    duplicados_probables {
+        uuid id PK
+        uuid documento_id FK
+        uuid documento_coincidente_id FK
+        varchar fingerprint
+        numeric score
+        jsonb criterios
+        varchar estado
+        text notas
+        timestamptz created_at
+        timestamptz updated_at
+    }
 
     documentos {
         uuid id PK
@@ -25,6 +40,8 @@ erDiagram
         varchar estado
         integer tamano_bytes
         text error_detalle
+        varchar content_fingerprint
+        boolean posible_duplicado
         timestamptz created_at
         timestamptz updated_at
     }
@@ -166,10 +183,12 @@ Representa un archivo PDF subido al sistema.
 | `estado`         | `VARCHAR(20)`   | NOT NULL, default `'subido'` | `subido`, `procesando`, `completado`, `error` |
 | `tamano_bytes`   | `INTEGER`       | NULL                         | Tamaño del archivo                            |
 | `error_detalle`  | `TEXT`          | NULL                         | Mensaje de error si el procesamiento falló    |
+| `content_fingerprint` | `VARCHAR(64)` | NULL, INDEX               | Firma lógica SHA-256 (dedup probabilística)   |
+| `posible_duplicado`   | `BOOLEAN`     | NOT NULL, default `false`  | Flag de duplicado probable detectado          |
 | `created_at`     | `TIMESTAMPTZ`   | NOT NULL, default `now()`    | Fecha de creación                             |
 | `updated_at`     | `TIMESTAMPTZ`   | NOT NULL, default `now()`    | Última modificación                           |
 
-**Índices:** `ix_documentos_hash_sha256` (UNIQUE)
+**Índices:** `ix_documentos_hash_sha256` (UNIQUE), `ix_documentos_content_fingerprint`
 
 ---
 
@@ -358,6 +377,34 @@ Registro de trabajos de procesamiento de PDFs. Trazabilidad del pipeline.
 
 ---
 
+### `duplicados_probables`
+
+Registra hallazgos de duplicados probables entre dos documentos que comparten la misma firma lógica de contenido (`content_fingerprint`) pero tienen hashes SHA-256 distintos. Los hallazgos son **no bloqueantes**: ambos documentos permanecen operativos y se marcan para revisión humana.
+
+| Columna                    | Tipo           | Restricciones                                    | Descripción                                           |
+| -------------------------- | -------------- | ------------------------------------------------ | ----------------------------------------------------- |
+| `id`                       | `UUID`         | PK                                               | Identificador único                                   |
+| `documento_id`             | `UUID`         | FK → `documentos.id` ON DELETE CASCADE, INDEX    | Documento recién cargado                              |
+| `documento_coincidente_id` | `UUID`         | FK → `documentos.id` ON DELETE CASCADE, INDEX    | Documento existente con misma firma                   |
+| `fingerprint`              | `VARCHAR(64)`  | NOT NULL                                         | Firma lógica compartida (SHA-256 hex)                 |
+| `score`                    | `NUMERIC(3,2)` | NOT NULL, default `1.0`, CHECK `[0.0, 1.0]`     | Grado de similitud (1.0 = firma idéntica)             |
+| `criterios`                | `JSONB`        | NOT NULL                                         | Evidencia estructurada del match (campos normalizados)|
+| `estado`                   | `VARCHAR(20)`  | NOT NULL, default `'pendiente'`, CHECK           | `pendiente`, `confirmado`, `descartado`               |
+| `notas`                    | `TEXT`         | NULL                                             | Notas del revisor humano                              |
+| `created_at`               | `TIMESTAMPTZ`  | NOT NULL                                         | Fecha de detección                                    |
+| `updated_at`               | `TIMESTAMPTZ`  | NOT NULL                                         | Última modificación                                   |
+
+**Índices:** `ix_duplicados_documento_id`, `ix_duplicados_documento_coincidente_id`, `ix_duplicados_estado_pendiente` (parcial: `WHERE estado = 'pendiente'`)
+
+**Restricción UNIQUE:** `(documento_id, documento_coincidente_id)` — impide registrar el mismo par más de una vez.
+
+**Check constraints:**
+- `ck_duplicados_no_self` — `documento_id != documento_coincidente_id`
+- `ck_duplicados_estado` — `estado IN ('pendiente', 'confirmado', 'descartado')`
+- `ck_duplicados_score_rango` — `score >= 0.0 AND score <= 1.0`
+
+---
+
 ## Extensiones de PostgreSQL
 
 ```sql
@@ -388,27 +435,34 @@ class TimestampMixin:
 
 Todas las FK hijas usan `ON DELETE CASCADE` excepto `gemini_audit_log.evaluacion_id` que usa `ON DELETE SET NULL` (los logs de auditoría deben sobrevivir a la eliminación de evaluaciones).
 
-### Deduplicación
+### Deduplicación en dos niveles
 
-`documentos.hash_sha256` (UNIQUE) previene la carga duplicada del mismo PDF.
+El sistema emplea deduplicación en dos niveles:
+
+1. **Exacta (SHA-256):** `documentos.hash_sha256` (UNIQUE) previene la carga duplicada del mismo archivo PDF binario. Devuelve HTTP 409 si el hash ya existe.
+2. **Probabilística (firma lógica):** `documentos.content_fingerprint` identifica PDFs con bytes distintos pero contenido lógico idéntico (mismo docente, periodo, cursos, puntajes). Los hallazgos se registran en `duplicados_probables` para revisión humana sin bloquear la carga.
+
+Los duplicados probables se marcan con `documentos.posible_duplicado = true` y se presentan en la biblioteca documental con un indicador visual.
 
 ---
 
 ## Historial de Migraciones
 
-| Revisión | Fecha      | Descripción                                                      |
-| -------- | ---------- | ---------------------------------------------------------------- |
-| `0001`   | 2026-04-03 | Schema inicial: `documentos` y `evaluaciones`                    |
-| `0002`   | 2026-04-03 | Agrega `datos_completos` (TEXT) a `evaluaciones`                 |
-| `0003`   | 2026-04-03 | Agrega `evaluacion_dimensiones` y `evaluacion_cursos`            |
-| `0004`   | 2026-04-03 | Agrega `comentario_analisis` con clasificación                   |
-| `0005`   | 2026-04-04 | Agrega `gemini_audit_log` para auditoría de IA                   |
-| `0006`   | 2026-04-04 | Agrega índices de rendimiento para analytics y qualitative       |
-| `0007`   | 2026-04-04 | Agrega `modalidad`, `año`, `periodo_orden` a `evaluaciones`      |
-| `0008`   | 2026-04-04 | Crea tabla `alertas` (sistema de alertas [AL-10] a [AL-50])      |
-| `0009`   | 2026-04-04 | Crea `document_processing_jobs` + restricciones UNIQUE           |
-| `0010`   | 2026-04-08 | Agrega CHECK constraint en `sent_score` de `comentario_analisis` |
-| `0011`   | 2026-04-08 | Agrega `modalidad` a restricción UNIQUE de `alertas` (dedup)     |
+| Revisión | Fecha      | Descripción                                                                |
+| -------- | ---------- | -------------------------------------------------------------------------- |
+| `0001`   | 2026-04-03 | Schema inicial: `documentos` y `evaluaciones`                              |
+| `0002`   | 2026-04-03 | Agrega `datos_completos` (TEXT) a `evaluaciones`                           |
+| `0003`   | 2026-04-03 | Agrega `evaluacion_dimensiones` y `evaluacion_cursos`                      |
+| `0004`   | 2026-04-03 | Agrega `comentario_analisis` con clasificación                             |
+| `0005`   | 2026-04-04 | Agrega `gemini_audit_log` para auditoría de IA                             |
+| `0006`   | 2026-04-04 | Agrega índices de rendimiento para analytics y qualitative                 |
+| `0007`   | 2026-04-04 | Agrega `modalidad`, `año`, `periodo_orden` a `evaluaciones`                |
+| `0008`   | 2026-04-04 | Crea tabla `alertas` (sistema de alertas [AL-10] a [AL-50])                |
+| `0009`   | 2026-04-04 | Crea `document_processing_jobs` + restricciones UNIQUE                     |
+| `0010`   | 2026-04-08 | Agrega CHECK constraint en `sent_score` de `comentario_analisis`           |
+| `0011`   | 2026-04-08 | Agrega `modalidad` a restricción UNIQUE de `alertas` (dedup)               |
+| `0012`   | 2026-04-11 | Agrega `content_fingerprint` a `documentos` + tabla `duplicados_probables` |
+| `0013`   | 2026-04-11 | Agrega flag `posible_duplicado` a `documentos`                             |
 
 ### Comandos de migración
 

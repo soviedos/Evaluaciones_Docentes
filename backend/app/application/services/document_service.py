@@ -85,12 +85,14 @@ class DocumentService:
             docente=filters.docente,
             periodo=filters.periodo,
             nombre_archivo=filters.nombre_archivo,
+            posible_duplicado=filters.posible_duplicado,
         )
         total = await self.repo.count_filtered(
             estado=filters.estado,
             docente=filters.docente,
             periodo=filters.periodo,
             nombre_archivo=filters.nombre_archivo,
+            posible_duplicado=filters.posible_duplicado,
         )
         return {
             "items": items,
@@ -112,4 +114,5 @@ class DocumentService:
             except Exception:
                 pass  # Storage cleanup is best-effort; DB cascade is critical
 
+        await self.repo.delete(documento)
         await self.repo.delete(documento)

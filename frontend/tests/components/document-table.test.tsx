@@ -16,6 +16,8 @@ function makeDoc(overrides: Partial<Documento> = {}): Documento {
     storage_path: `documentos/${id}.pdf`,
     tamano_bytes: 1024,
     error_detalle: null,
+    content_fingerprint: null,
+    posible_duplicado: false,
     created_at: "2025-06-15T10:30:00Z",
     updated_at: "2025-06-15T10:30:00Z",
     ...overrides,
@@ -48,7 +50,9 @@ describe("DocumentTable", () => {
         onSort={mockSort}
       />,
     );
-    expect(screen.getByText("No se encontraron documentos")).toBeInTheDocument();
+    expect(
+      screen.getByText("No se encontraron documentos"),
+    ).toBeInTheDocument();
   });
 
   it("renders document rows", () => {
@@ -114,7 +118,9 @@ describe("DocumentTable", () => {
       />,
     );
 
-    const sortButton = screen.getByRole("button", { name: /Ordenar por Nombre/i });
+    const sortButton = screen.getByRole("button", {
+      name: /Ordenar por Nombre/i,
+    });
     await user.click(sortButton);
     expect(mockSort).toHaveBeenCalledWith("nombre_archivo");
   });
@@ -131,9 +137,50 @@ describe("DocumentTable", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: /Ordenar por Nombre/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Ordenar por Nombre/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Estado")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Ordenar por Tamaño/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Ordenar por Fecha de carga/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Ordenar por Tamaño/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Ordenar por Fecha de carga/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders duplicado badge for duplicate documents", () => {
+    const docs = [
+      makeDoc({ posible_duplicado: true }),
+      makeDoc({ posible_duplicado: false }),
+    ];
+    render(
+      <DocumentTable
+        data={docs}
+        isLoading={false}
+        isEmpty={false}
+        sortBy="created_at"
+        sortOrder="desc"
+        onSort={mockSort}
+      />,
+    );
+
+    const badges = screen.getAllByTestId("duplicado-badge");
+    expect(badges).toHaveLength(1);
+  });
+
+  it("does not render duplicado badge when no documents are duplicates", () => {
+    render(
+      <DocumentTable
+        data={[makeDoc(), makeDoc()]}
+        isLoading={false}
+        isEmpty={false}
+        sortBy="created_at"
+        sortOrder="desc"
+        onSort={mockSort}
+      />,
+    );
+
+    expect(screen.queryByTestId("duplicado-badge")).not.toBeInTheDocument();
   });
 });

@@ -9,10 +9,12 @@
 
 El procesamiento transforma un archivo PDF de evaluación docente CENFOTEC en datos relacionales listos para consulta y análisis. El pipeline es **determinístico** (sin IA) para la extracción y clasificación base, reservando Gemini únicamente para consultas semánticas posteriores.
 
+La deduplicación opera en dos niveles: **exacta** (SHA-256 del archivo, bloquea carga) y **probabilística** (firma lógica del contenido, detecta sin bloquear).
+
 ```
-PDF → Upload → MinIO → Parser → Extracción → Clasificación → PostgreSQL
-                                   ↓                ↓
-                               4 extractores    keywords/reglas
+PDF → Upload → MinIO → Parser → Extracción → Clasificación → PostgreSQL → Detección de duplicados
+                                   ↓                ↓                            ↓
+                               4 extractores    keywords/reglas          firma lógica (best-effort)
 ```
 
 ---
@@ -30,9 +32,9 @@ sequenceDiagram
 
     U->>FE: Selecciona PDF
     FE->>API: POST /api/v1/documentos (multipart)
-    API->>API: Calcula SHA-256
-    API->>DB: ¿hash_sha256 existe?
-    alt Duplicado
+    API->>API: Calcula SHA-256 del archivo
+    API->>DB: ¿hash_sha256 existe? (dedup exacta)
+    alt Duplicado exacto
         API-->>FE: 409 Conflict
     else Nuevo
         API->>S3: put_object(pdf_bytes)
@@ -45,8 +47,9 @@ sequenceDiagram
 **Decisiones clave:**
 
 - El PDF se almacena en MinIO **antes** de encolar — si el procesamiento falla, el archivo no se pierde.
-- Hash SHA-256 evita procesamiento duplicado.
+- Hash SHA-256 evita cargas del mismo archivo binario (deduplicación exacta, nivel 1).
 - Respuesta `202 Accepted` inmediata — el procesamiento es asíncrono.
+- La detección de duplicados probables (nivel 2) ocurre **después** del parseo, nunca en esta fase.
 
 ---
 
@@ -272,14 +275,69 @@ graph LR
     D -->|No| F[UPDATE doc<br/>estado=error]
     E --> G[enrich PeriodoData]
     G --> H[INSERT evaluacion<br/>+ dimensiones<br/>+ cursos<br/>+ comentarios]
-    H --> I[UPDATE doc<br/>estado=completado]
+    H --> I[detect_duplicates<br/>best-effort]
+    I --> J[UPDATE doc<br/>estado=completado]
 ```
 
 El procesamiento es síncrono dentro del background task. Los fallos de parseo (PDF mal formado) marcan `estado = 'error'` sin reintentos.
 
 ---
 
-## 6. Versión del Parser
+## 7. Detección de Duplicados Probables
+
+Después de la persistencia exitosa, el sistema ejecuta una detección de duplicados probables basada en la **firma lógica de contenido**.
+
+### 7.1 Flujo
+
+```mermaid
+sequenceDiagram
+    participant PS as ProcessingService
+    participant DDS as DuplicateDetectionService
+    participant FP as fingerprint module
+    participant DB as PostgreSQL
+
+    PS->>DDS: check_and_flag(documento, parsed)
+    DDS->>FP: compute_content_fingerprint(parsed)
+    FP-->>DDS: FingerprintResult {fingerprint, criterios}
+    DDS->>DB: UPDATE documentos SET content_fingerprint
+    DDS->>DB: SELECT documentos WHERE content_fingerprint = ? AND id != ?
+    alt Candidatos encontrados
+        DDS->>DB: INSERT duplicados_probables (score, criterios, estado='pendiente')
+        DDS->>DB: UPDATE documentos SET posible_duplicado = true
+    end
+    DDS-->>PS: findings_count
+```
+
+### 7.2 Firma lógica (`content_fingerprint`)
+
+La firma se construye concatenando campos normalizados del `ParsedEvaluacion` y calculando su SHA-256:
+
+```
+docente={nombre_normalizado}|modalidad={UPPER}|año={int}|periodo={normalizado}|
+cursos={codigo:grupo ordenados}|promedio={x.xx}|dimensiones={nombre:pct ordenados}|
+comentarios={count}
+```
+
+La normalización del nombre elimina acentos, colapsa espacios y convierte a minúsculas, lo que permite detectar coincidencias aunque el PDF haya sido re-exportado con variaciones menores de encoding.
+
+### 7.3 Características
+
+| Propiedad                    | Valor                                                    |
+| ---------------------------- | -------------------------------------------------------- |
+| **Bloqueo**                  | No. Ambos documentos se procesan normalmente.            |
+| **Tolerancia a fallos**      | Best-effort. Un error no afecta el estado del documento. |
+| **Estado inicial**           | `pendiente` — requiere revisión humana.                  |
+| **Score**                    | `1.0` para match exacto de firma. Rango `[0.0, 1.0]`.    |
+| **Dependencia IA**           | Ninguna. Comparación determinística pura (Python).       |
+| **Dedup semántica avanzada** | No implementada. Sin embeddings ni similitud coseno.     |
+
+### 7.4 Visualización
+
+Los documentos con `posible_duplicado = true` muestran un badge **"Duplicado"** (ámbar) en la biblioteca documental. Al pasar el cursor, se carga de forma lazy la lista de documentos coincidentes con su nombre y porcentaje de similitud desde `GET /api/v1/documentos/{id}/duplicados`.
+
+---
+
+## 8. Versión del Parser
 
 ```python
 PARSER_VERSION = "1.0.0"  # en constants.py
