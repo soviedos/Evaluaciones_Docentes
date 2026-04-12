@@ -1,6 +1,6 @@
-# Backend — Evaluaciones Docentes
+# Backend — Gestión Académica
 
-> API REST construida con FastAPI y Python 3.12, con procesamiento asíncrono vía BackgroundTasks y análisis con Gemini API.
+> API REST construida con FastAPI y Python 3.12 como **monolito modular**. Cada módulo académico vive en `app/modules/<nombre>/` con capas propias (api, application, domain, infrastructure). El shared kernel en `app/shared/` provee configuración, entidades base e infraestructura común.
 
 ---
 
@@ -25,46 +25,41 @@
 ```
 backend/
 ├── app/
-│   ├── __init__.py
-│   ├── main.py                      → Punto de entrada FastAPI
-│   ├── core/
-│   │   ├── config.py                → Settings con pydantic-settings
-│   │   ├── cache.py                 → Caché y rate limiting
-│   │   └── logging.py               → Configuración de logging
-│   ├── api/
-│   │   ├── deps.py                  → Dependencias inyectables (DB session, repos)
-│   │   ├── rate_limit.py            → Rate limiter para endpoints
-│   │   └── v1/
-│   │       ├── router.py            → Agregador de routers v1
-│   │       ├── evaluaciones.py      → CRUD de evaluaciones
-│   │       ├── documentos.py        → Upload y gestión de PDFs
-│   │       ├── config_routes.py     → Endpoint de configuración (umbrales)
-│   │       └── ...                  → analytics, qualitative, query, etc.
-│   ├── domain/                      → Lógica de negocio pura
-│   │   ├── alert_rules.py           → Reglas y umbrales de alertas
-│   │   ├── periodo.py               → Parsing y ordenamiento temporal
-│   │   ├── entities/                → Entidades del dominio (SQLAlchemy)
-│   │   └── schemas/                 → Schemas Pydantic (request/response)
-│   ├── application/                 → Servicios de aplicación
-│   │   ├── services/                → Orquestadores de negocio
-│   │   ├── parsing/                 → Extracción de texto de PDFs
-│   │   └── classification/          → Clasificación de comentarios
-│   ├── infrastructure/              → Adaptadores externos
-│   │   ├── external/
-│   │   │   └── gemini_gateway.py    → Wrapper Gemini con retry + circuit breaker
-│   │   ├── repositories/            → Repositorios (PostgreSQL)
-│   │   ├── storage/                 → MinIO client
-│   │   └── tasks/                   → Celery (reservado para migración futura)
-├── scripts/                         → Scripts operacionales (backfill, reanalyze)
+│   ├── main.py                           → Punto de entrada FastAPI
+│   ├── api/                              → Capa API compartida
+│   │   ├── deps.py                       → Dependencias inyectables (DB, MinIO)
+│   │   ├── rate_limit.py                 → Rate limiter
+│   │   └── v1/router.py                 → Agregador de routers de módulos
+│   │
+│   ├── modules/                          → ─── Bounded Contexts ───
+│   │   ├── evaluacion_docente/           → Módulo implementado
+│   │   │   ├── api/                      → Routers (alertas, analytics, dashboard…)
+│   │   │   ├── application/              → Servicios, parsing, clasificación
+│   │   │   ├── domain/                   → Entidades, schemas, reglas de negocio
+│   │   │   └── infrastructure/           → Repositorios SQL, cliente Gemini
+│   │   └── auth/                         → Módulo transversal
+│   │       ├── api/                      → Endpoints de autenticación
+│   │       ├── application/              → Servicios de auth
+│   │       ├── domain/                   → Entidades y schemas de usuario
+│   │       └── infrastructure/           → Repositorios de usuario
+│   │
+│   └── shared/                           → ─── Shared Kernel ───
+│       ├── core/                         → config.py, logging.py, cache.py
+│       ├── domain/                       → Entidades base, excepciones, schemas
+│       └── infrastructure/               → DB engine, session, MinIO, Celery
+│
+├── scripts/                              → Scripts de backfill y mantenimiento
 ├── tests/
-│   ├── conftest.py                  → Fixtures compartidos (TestClient, DB)
-│   ├── unit/                        → Tests unitarios
-│   ├── integration/                 → Tests de integración
-│   └── fixtures/                    → PDFs de prueba y datos mock
-├── pyproject.toml                   → Dependencias y configuración de herramientas
-├── Dockerfile
-└── .env.example
+│   ├── conftest.py                       → Fixtures compartidos
+│   ├── api/                              → Tests de endpoints
+│   ├── unit/                             → Tests unitarios
+│   ├── integration/                      → Tests de integración
+│   └── fixtures/                         → PDFs de prueba y datos mock
+├── pyproject.toml
+└── Dockerfile
 ```
+
+> **Nota**: Los directorios `app/core/`, `app/domain/`, `app/infrastructure/` y `app/application/` aún existen como shims de compatibilidad que re-exportan desde `app/shared/` y `app/modules/`.
 
 ---
 
@@ -127,10 +122,10 @@ ruff check .
 ruff format .
 
 # Crear migración
-alembic -c app/db/migrations/alembic.ini revision --autogenerate -m "descripcion"
+alembic -c app/shared/infrastructure/database/migrations/alembic.ini revision --autogenerate -m "descripcion"
 
 # Aplicar migraciones
-alembic -c app/db/migrations/alembic.ini upgrade head
+alembic -c app/shared/infrastructure/database/migrations/alembic.ini upgrade head
 
 # Iniciar worker Celery (opcional, no requerido en modo BackgroundTasks)
 # celery -A app.infrastructure.tasks.celery_app worker --loglevel=info

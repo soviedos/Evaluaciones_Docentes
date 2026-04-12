@@ -1,6 +1,6 @@
-# Frontend — Evaluaciones Docentes
+# Frontend — Gestión Académica
 
-> Aplicación web construida con Next.js 16 y TypeScript, usando App Router en formato MPA.
+> Aplicación web construida con Next.js 16 y TypeScript, usando App Router en formato MPA. Cada módulo académico se organiza como feature en `src/features/<nombre>/` con componentes, hooks, utilidades y tipos propios.
 
 ---
 
@@ -24,31 +24,36 @@ frontend/
 ├── public/                          → Archivos estáticos
 ├── src/
 │   ├── app/                         → App Router (páginas MPA)
-│   │   ├── (auth)/                  → Grupo: autenticación
-│   │   │   └── login/page.tsx
-│   │   ├── (dashboard)/             → Grupo: panel principal
-│   │   │   ├── carga/page.tsx       → Subida de PDFs
-│   │   │   ├── evaluaciones/page.tsx→ Listado de evaluaciones
-│   │   │   ├── reportes/page.tsx    → Reportes y métricas
-│   │   │   └── layout.tsx           → Layout compartido del dashboard
+│   │   ├── (platform)/              → Grupo: plataforma principal
+│   │   │   ├── dashboard/page.tsx   → Dashboard de plataforma
+│   │   │   ├── evaluacion-docente/  → Módulo evaluación docente
+│   │   │   │   ├── inicio/page.tsx  → Dashboard ejecutivo
+│   │   │   │   ├── carga/page.tsx   → Subida de PDFs
+│   │   │   │   ├── biblioteca/     → Biblioteca de documentos
+│   │   │   │   ├── estadisticas/   → Analytics
+│   │   │   │   ├── sentimiento/    → Análisis cualitativo
+│   │   │   │   ├── consultas-ia/   → Consultas IA (RAG)
+│   │   │   │   └── ...
+│   │   │   └── layout.tsx           → Layout compartido (sidebar)
+│   │   ├── login/page.tsx           → Página de login
 │   │   ├── layout.tsx               → Layout raíz
-│   │   └── page.tsx                 → Página de entrada (redirect)
+│   │   └── page.tsx                 → Redirect a /dashboard
+│   ├── features/
+│   │   └── evaluacion-docente/      → Módulo: evaluación docente
+│   │       ├── components/          → Componentes del módulo
+│   │       ├── hooks/               → Hooks del módulo
+│   │       ├── lib/                 → API clients y reglas de negocio
+│   │       └── types/               → Tipos del módulo
 │   ├── components/
 │   │   ├── ui/                      → Componentes base (Button, Input, Card)
-│   │   ├── evaluaciones/            → Componentes de dominio
-│   │   ├── reportes/                → Componentes de reportes
 │   │   └── layout/                  → Navbar, Sidebar, Footer
-│   ├── hooks/                       → Custom hooks de React
+│   ├── hooks/                       → Custom hooks compartidos
 │   ├── lib/
 │   │   ├── api-client.ts            → Wrapper HTTP para el backend
-│   │   ├── auth.ts                  → Utilidades de autenticación
 │   │   └── utils.ts                 → Funciones utilitarias
-│   ├── types/
-│   │   └── index.ts                 → Tipos e interfaces compartidas
 │   └── styles/
 │       └── globals.css              → Estilos globales + Tailwind
 ├── next.config.ts
-├── tailwind.config.ts
 ├── tsconfig.json
 ├── postcss.config.mjs
 ├── package.json

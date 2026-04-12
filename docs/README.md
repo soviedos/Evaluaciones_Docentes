@@ -1,22 +1,25 @@
-# Documentación — Evaluaciones Docentes
+# Documentación — Gestión Académica
 
-> Índice centralizado de toda la documentación técnica del proyecto.
+> Índice centralizado de toda la documentación técnica de la plataforma modular `cenfotec-gestion-academica`.
 
 ---
 
 ## Documentos Disponibles
 
-| Documento                                        | Descripción                                                             | Audiencia                          |
-| ------------------------------------------------ | ----------------------------------------------------------------------- | ---------------------------------- |
-| [architecture.md](architecture.md)               | Arquitectura del sistema, diagrama de componentes y decisiones técnicas | Desarrolladores, Arquitectos       |
-| [data-model.md](data-model.md)                   | Modelo de datos: esquema ER, tablas, columnas, índices, migraciones     | Desarrolladores Backend, DBA       |
-| [processing-pipeline.md](processing-pipeline.md) | Flujo de procesamiento: upload → parseo → clasificación → persistencia  | Desarrolladores Backend            |
-| [gemini-integration.md](gemini-integration.md)   | Integración con Gemini API: RAG, prompts, auditoría, manejo de errores  | Desarrolladores Backend            |
-| [testing-strategy.md](testing-strategy.md)       | Estrategia de testing: pirámide, fixtures, herramientas, convenciones   | Todo el equipo de desarrollo       |
-| [local-development.md](local-development.md)     | Guía de desarrollo local: setup, comandos, troubleshooting              | Nuevos desarrolladores             |
-| [deployment.md](deployment.md)                   | Guía de despliegue on-premise con Docker Compose + Nginx                | DevOps, Administradores            |
-| [api-contracts.md](api-contracts.md)             | Especificación de endpoints de la API REST (request/response)           | Desarrolladores Frontend y Backend |
-| [adr/](adr/)                                     | Registros de decisiones arquitectónicas (ADR)                           | Todo el equipo                     |
+| Documento                                                              | Descripción                                                            | Audiencia                          |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------- |
+| [architecture.md](architecture.md)                                     | Resumen de arquitectura y decisiones técnicas                          | Desarrolladores, Arquitectos       |
+| [architecture/system-overview.md](architecture/system-overview.md)     | Visión general: módulos, stack, flujo de datos                         | Todo el equipo                     |
+| [architecture/project-structure.md](architecture/project-structure.md) | Estructura detallada de directorios (backend + frontend)               | Desarrolladores                    |
+| [architecture/modular-monolith.md](architecture/modular-monolith.md)   | Arquitectura del monolito modular: reglas y convenciones               | Desarrolladores, Arquitectos       |
+| [data-model.md](data-model.md)                                         | Modelo de datos: esquema ER, tablas, columnas, índices, migraciones    | Desarrolladores Backend, DBA       |
+| [processing-pipeline.md](processing-pipeline.md)                       | Flujo de procesamiento: upload → parseo → clasificación → persistencia | Desarrolladores Backend            |
+| [gemini-integration.md](gemini-integration.md)                         | Integración con Gemini API: RAG, prompts, auditoría, manejo de errores | Desarrolladores Backend            |
+| [testing-strategy.md](testing-strategy.md)                             | Estrategia de testing: pirámide, fixtures, herramientas, convenciones  | Todo el equipo de desarrollo       |
+| [local-development.md](local-development.md)                           | Guía de desarrollo local: setup, comandos, troubleshooting             | Nuevos desarrolladores             |
+| [deployment.md](deployment.md)                                         | Guía de despliegue on-premise con Docker Compose + Nginx               | DevOps, Administradores            |
+| [api-contracts.md](api-contracts.md)                                   | Especificación de endpoints de la API REST (request/response)          | Desarrolladores Frontend y Backend |
+| [adr/](adr/)                                                           | Registros de decisiones arquitectónicas (ADR)                          | Todo el equipo                     |
 
 ---
 
