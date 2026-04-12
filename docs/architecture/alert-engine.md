@@ -1,7 +1,7 @@
 # Motor de Alertas — Documentación Técnica
 
 > **Reglas de negocio:** `[AL-01]` – `[AL-50]`, `[VZ-30]` – `[VZ-31]`  
-> **Última actualización:** 2026-04-05  
+> **Última actualización:** 2026-04-11  
 > **Estado:** Implementado y con tests
 
 ---
@@ -19,7 +19,8 @@ El motor de alertas detecta anomalías académicas de forma automática, analiza
        ▼                                        ▼
   Por modalidad:                         Dedup por:
   CUATRIMESTRAL,                    (docente, curso,
-  MENSUAL, B2B                      periodo, tipo_alerta)
+  MENSUAL, B2B                      periodo, tipo_alerta,
+                                     modalidad)
 ```
 
 ---
@@ -366,7 +367,7 @@ class Alerta(UUIDMixin, TimestampMixin, Base):
     # ... campos ...
     __table_args__ = (
         UniqueConstraint("docente_nombre", "curso", "periodo", "tipo_alerta",
-                         name="uq_alertas_dedup"),
+                         "modalidad", name="uq_alertas_dedup"),
         CheckConstraint("modalidad IN ('CUATRIMESTRAL','MENSUAL','B2B')"),
         CheckConstraint("severidad IN ('alta','media','baja')"),
         CheckConstraint("estado IN ('activa','revisada','resuelta','descartada')"),
@@ -397,12 +398,15 @@ Para agregar un nuevo tipo de alerta:
 
 ## 11. Tests
 
-| Suite          | Archivo                                    | Tests | Cobertura                 |
-| -------------- | ------------------------------------------ | ----- | ------------------------- |
-| Detectores     | `tests/unit/test_alert_rules.py`           | 68    | 4 detectores + edge cases |
-| API            | `tests/api/test_alertas.py`                | 17    | Endpoints + filtros       |
-| Frontend       | `tests/components/command-center.test.tsx` | 20    | Renderizado + interacción |
-| Business rules | `tests/unit/business-rules.test.ts`        | 36    | Labels, colores, umbrales |
+| Suite             | Archivo                                      | Cobertura                                          |
+| ----------------- | -------------------------------------------- | -------------------------------------------------- |
+| Detectores        | `tests/unit/test_alert_rules.py`             | 4 detectores + edge cases                          |
+| Edge cases        | `tests/unit/test_alert_engine_edge_cases.py` | Year boundaries, isolation, dedup, missing periods |
+| Contratos dominio | `tests/unit/test_domain_contracts.py`        | Threshold boundaries, dedup key 5-field, isolation |
+| Enforcement       | `tests/unit/test_enforcement.py`             | Invariant guards, modalidad enforcement            |
+| API               | `tests/api/test_alertas.py`                  | Endpoints + filtros                                |
+| Frontend          | `tests/components/command-center.test.tsx`   | Renderizado + interacción                          |
+| Business rules    | `tests/unit/business-rules.test.ts`          | Labels, colores, umbrales                          |
 
 ---
 

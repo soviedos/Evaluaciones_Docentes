@@ -1,7 +1,7 @@
 # Manejo de Modalidades — Documentación Técnica
 
 > **Reglas de negocio:** `[BR-MOD-01]` – `[BR-MOD-05]`, `[BR-FE-01]` – `[BR-FE-03]`, `[BR-AN-01]`  
-> **Última actualización:** 2026-04-05  
+> **Última actualización:** 2026-04-11  
 > **Estado:** Implementado y con tests
 
 ---
@@ -188,16 +188,70 @@ class AlertEngine:
             # Acumula resultados...
 
     async def run_for_modalidad(self, modalidad: str) -> AlertRunResult:
-        # 1. Obtener últimos 2 periodos DE ESTA modalidad
+        # 1. Validar modalidad vía require_modalidad() [BR-MOD-02]
+        modalidad = require_modalidad(modalidad)
+
+        # 2. Obtener últimos 2 periodos DE ESTA modalidad
         periodos = await self._repo.find_last_two_periods(modalidad)
 
-        # 2. Cargar snapshots filtrados por modalidad
+        # 3. Cargar snapshots filtrados por modalidad
         snapshots = await self._repo.load_snapshots(modalidad, periodos)
 
-        # 3. Detectores corren sobre datos de UNA sola modalidad
+        # 4. Detectores corren sobre datos de UNA sola modalidad
+        #    Cross-modalidad guard filtra candidatos con modalidad incorrecta
         for detector in self._detectors:
             candidates = detector.detect(snapshots, periodos)
 ```
+
+---
+
+## 7. Enforcement en el dominio
+
+**Archivo:** `app/domain/invariants.py`
+
+El backend valida modalidad en los límites del sistema mediante funciones de enforcement:
+
+```python
+def require_modalidad(valor: str | None) -> str:
+    """Rechaza None/vacío (ModalidadRequeridaError) y no-análisis
+    incluyendo DESCONOCIDA (ModalidadInvalidaError).
+    Normaliza a mayúsculas con strip()."""
+
+def require_modalidad_valid(valor: str | None) -> str:
+    """Igual pero ACEPTA DESCONOCIDA — para persistencia."""
+
+def require_periodo_orden(periodo_orden: int, modalidad: str) -> int:
+    """Valida que periodo_orden esté en rango según modalidad:
+    CUATRIMESTRAL: 1-3, MENSUAL: 1-10, B2B: 0."""
+```
+
+Estas funciones se invocan en:
+
+- Endpoints API (query params)
+- `AlertEngine.run_for_modalidad()`
+- Servicio de procesamiento
+
+El frontend **no duplica** esta lógica — consume valores ya validados del backend.
+
+---
+
+## 8. Principio de delegación al frontend
+
+El frontend declara las modalidades como constantes de UI (`MODALIDADES` en `business-rules.ts`) pero **no infiere modalidad a partir de periodos** ni valida `period_order`. Toda determinación de modalidad y periodo se ejecuta exclusivamente en el backend:
+
+```typescript
+// frontend/src/lib/business-rules.ts
+export const MODALIDADES = [
+  { value: "CUATRIMESTRAL", label: "Cuatrimestral (C1–C3)" },
+  { value: "MENSUAL", label: "Mensual (M1–M10, MT1–MT10)" },
+  { value: "B2B", label: "B2B (Corporativos)" },
+] as const;
+// ↑ Solo labels de UI. Sin regex, sin parsing, sin inferencia.
+```
+
+Los datos de periodo (`año`, `periodo_orden`) llegan pre-calculados en los DTOs `PeriodoMetrica` y `PeriodoOption`.
+
+````
 
 ### 6.3 Queries filtradas por modalidad
 
@@ -214,7 +268,7 @@ SELECT docente_nombre, periodo, AVG(puntaje_general) ...
 FROM evaluaciones
 WHERE modalidad = :modalidad AND periodo IN (:periodos)
 GROUP BY docente_nombre, periodo
-```
+````
 
 ---
 

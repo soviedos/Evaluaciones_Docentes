@@ -7,6 +7,8 @@ Base URL: `http://localhost:8000/api/v1`
 
 Documentación interactiva (Swagger): `http://localhost:8000/docs`
 
+> **Fuente de verdad:** El backend es la única fuente de verdad para validación de modalidad, periodo, `año` y `periodo_orden`. Los DTOs de respuesta incluyen campos pre-calculados (`año`, `periodo_orden`) para que el frontend ordene y filtre sin duplicar lógica de dominio. Toda validación de entrada (modalidad requerida, rango de año, formato de periodo) se ejecuta en `app/domain/invariants.py`.
+
 ---
 
 ## Índice
@@ -148,6 +150,9 @@ GET /api/v1/evaluaciones/
       "documento_id": "uuid",
       "docente_nombre": "Juan Pérez",
       "periodo": "I Cuatrimestre 2025",
+      "modalidad": "CUATRIMESTRAL",
+      "año": 2025,
+      "periodo_orden": 1,
       "materia": "Programación I",
       "puntaje_general": 85.5,
       "resumen_ia": null,
@@ -180,6 +185,17 @@ GET /api/v1/analytics/periodos
 | `modalidad` | string | —       | Filtrar por modalidad (opcional) |
 
 **Response 200:** `PeriodoOption[]` — Lista de períodos con su modalidad, ordenados cronológicamente.
+
+```json
+[
+  {
+    "periodo": "I Cuatrimestre 2025",
+    "modalidad": "CUATRIMESTRAL",
+    "año": 2025,
+    "periodo_orden": 1
+  }
+]
+```
 
 ### Escuelas disponibles
 
@@ -291,6 +307,19 @@ GET /api/v1/analytics/evolucion
 | `curso`     | string | —       | Filtrar por curso                       |
 
 **Response 200:** `PeriodoMetrica[]`
+
+```json
+[
+  {
+    "periodo": "I Cuatrimestre 2025",
+    "modalidad": "CUATRIMESTRAL",
+    "año": 2025,
+    "periodo_orden": 1,
+    "promedio": 82.3,
+    "evaluaciones_count": 45
+  }
+]
+```
 
 ### Ranking de docentes
 

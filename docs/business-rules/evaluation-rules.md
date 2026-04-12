@@ -1,7 +1,7 @@
 # Reglas de Negocio — Evaluaciones Docentes
 
-> **Versión:** 1.0.0  
-> **Fecha:** 2026-04-05  
+> **Versión:** 1.1.0  
+> **Fecha:** 2026-04-11  
 > **Estado:** Vigente  
 > **Alcance:** Todas las capas del sistema (parser, backend, frontend, BI)
 
@@ -37,6 +37,10 @@ Este documento define las reglas de negocio que gobiernan **toda** la lógica de
 - cálculos estadísticos y de tendencia,
 - visualización en dashboards ejecutivos,
 - consistencia transversal de datos.
+
+### 1.4 Principio de fuente de verdad
+
+El **backend** es la fuente de verdad única para toda validación de dominio. La validación de modalidad, periodo, `period_order` y año se ejecuta exclusivamente en la capa de dominio del backend (`app/domain/`). El frontend **consume** estos valores ya validados y **no duplica** lógica de validación ni inferencia de modalidad. Esto elimina riesgos de inconsistencia entre capas.
 
 ### 1.2 Audiencia
 
@@ -210,13 +214,14 @@ def determinar_modalidad(periodo: str) -> str:
 1. Recepción y deduplicación (SHA-256)
 2. Almacenamiento en MinIO
 3. Extracción de encabezado (header)
-4. Extracción de métricas (dimensiones + resumen)
-5. Extracción de cursos/grupos
-6. Extracción de comentarios
-7. Clasificación de comentarios (tema + sentimiento)
-8. Persistencia transaccional
-9. Enriquecimiento IA (best-effort, async)
-10. Determinación de modalidad y periodo normalizado
+4. Determinación de modalidad, `año` y `periodo_orden` (dominio)
+5. Extracción de métricas (dimensiones + resumen)
+6. Extracción de cursos/grupos
+7. Extracción de comentarios
+8. Clasificación de comentarios (tema + sentimiento)
+9. Persistencia transaccional (incluye modalidad, año, periodo_orden)
+10. Detección de duplicados probables (firma lógica, best-effort)
+11. Enriquecimiento IA (best-effort, async)
 ```
 
 `[BR-PROC-02]` El parser **MUST** ser una función pura determinística: dado el mismo PDF, siempre produce el mismo resultado. No depende de estado externo ni de servicios de red.
@@ -469,15 +474,26 @@ M1 2025 → M2 2025 → ... → M10 2025 → M1 2026
 MT1 2025 → MT2 2025 → ... → MT10 2025 → MT1 2026
 ```
 
-`[BR-AN-41]` La función de parsing de periodo **MUST** extraer:
+`[BR-AN-41]` La función de parsing de periodo **MUST** extraer un `PeriodoInfo` con los siguientes campos:
 
 ```python
-def parse_periodo(periodo: str) -> tuple[int, int, str]:
-    """Retorna (año, numero_periodo, prefijo) para ordenamiento."""
-    # Ejemplo: "C2 2025"  → (2025, 2, "C")
-    # Ejemplo: "M10 2026" → (2026, 10, "M")
-    # Ejemplo: "MT3 2024" → (2024, 3, "MT")
+@dataclass(frozen=True)
+class PeriodoInfo:
+    periodo_normalizado: str   # "C2 2025"
+    modalidad: Modalidad       # CUATRIMESTRAL
+    año: int                   # 2025
+    periodo_orden: int         # 2  (C1→1, C2→2, C3→3, M1→1..M10→10, B2B→0)
+    prefijo: str               # "C"
+    numero: int                # 2
+
+def periodo_sort_key(info: PeriodoInfo) -> tuple[int, str, int]:
+    """(año, prefijo, numero) — sort key canónico."""
+    # Ejemplo: "C2 2025"  → (2025, "C", 2)
+    # Ejemplo: "M10 2026" → (2026, "M", 10)
+    # Ejemplo: "MT3 2024" → (2024, "MT", 3)
 ```
+
+El campo `periodo_orden` se persiste en la tabla `evaluaciones` y se expone en la API (`PeriodoMetrica`, `PeriodoOption`) para que el frontend ordene sin duplicar lógica de parsing.
 
 `[BR-AN-42]` El ordenamiento **MUST** soportar continuidad entre años. Ejemplo correcto:
 
@@ -647,13 +663,13 @@ incremento       = pct_neg_actual - pct_neg_anterior
 
 ### 6.5 Regla de no duplicidad
 
-`[AL-40]` No se **MUST NOT** generar alertas duplicadas. La unicidad se define por la combinación:
+`[AL-40]` No se **MUST NOT** generar alertas duplicadas. La unicidad se define por la combinación de **5 campos**:
 
 ```
-(docente_nombre, curso, periodo, tipo_alerta)
+(docente_nombre, curso, periodo, tipo_alerta, modalidad)
 ```
 
-Si ya existe una alerta para esa combinación, se actualiza en lugar de crear una nueva.
+Si ya existe una alerta para esa combinación, se actualiza en lugar de crear una nueva. La deduplicación opera en dos capas: in-memory durante `_detect()` (set de tuplas vistas) y en base de datos via `ON CONFLICT … DO UPDATE` sobre un constraint UNIQUE de 5 columnas.
 
 ### 6.6 Ciclo de vida de alertas
 
@@ -1164,12 +1180,18 @@ bien mal mucho poco cuando tiene cada uno era han ha
 
 | Constante                 | Valor   | Archivo                        |
 | ------------------------- | ------- | ------------------------------ |
-| `ALERT_THRESHOLD_HIGH`    | `60.0`  | dashboard_service.py           |
-| `ALERT_THRESHOLD_MEDIUM`  | `70.0`  | (por implementar)              |
-| `ALERT_THRESHOLD_LOW`     | `80.0`  | (por implementar)              |
-| `DROP_THRESHOLD_HIGH`     | `15.0`  | (por implementar)              |
-| `DROP_THRESHOLD_MEDIUM`   | `10.0`  | (por implementar)              |
-| `DROP_THRESHOLD_LOW`      | `5.0`   | (por implementar)              |
+| `ALERT_THRESHOLD_HIGH`    | `60.0`  | `app/domain/alert_rules.py`    |
+| `ALERT_THRESHOLD_MEDIUM`  | `70.0`  | `app/domain/alert_rules.py`    |
+| `ALERT_THRESHOLD_LOW`     | `80.0`  | `app/domain/alert_rules.py`    |
+| `DROP_THRESHOLD_HIGH`     | `15.0`  | `app/domain/alert_rules.py`    |
+| `DROP_THRESHOLD_MEDIUM`   | `10.0`  | `app/domain/alert_rules.py`    |
+| `DROP_THRESHOLD_LOW`      | `5.0`   | `app/domain/alert_rules.py`    |
+| `SENT_THRESHOLD_HIGH`     | `20.0`  | `app/domain/alert_rules.py`    |
+| `SENT_THRESHOLD_MEDIUM`   | `10.0`  | `app/domain/alert_rules.py`    |
+| `SENT_THRESHOLD_LOW`      | `5.0`   | `app/domain/alert_rules.py`    |
+| `PATTERN_MEJORA_NEG`      | `0.50`  | `app/domain/alert_rules.py`    |
+| `PATTERN_ACTITUD_NEG`     | `0.30`  | `app/domain/alert_rules.py`    |
+| `PATTERN_OTRO`            | `0.40`  | `app/domain/alert_rules.py`    |
 | `SENTIMENT_THRESHOLD_POS` | `0.25`  | classification/\_\_init\_\_.py |
 | `SENTIMENT_THRESHOLD_NEG` | `-0.25` | classification/\_\_init\_\_.py |
 | `GEMINI_BATCH_SIZE`       | `10`    | gemini_enrichment_service.py   |
@@ -1237,6 +1259,7 @@ FUENTES_EVALUACION = {
 
 > **Historial de cambios**
 >
-> | Versión | Fecha      | Descripción       |
-> | ------- | ---------- | ----------------- |
-> | 1.0.0   | 2026-04-05 | Documento inicial |
+> | Versión | Fecha      | Descripción                                                                                                                                                                    |
+> | ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+> | 1.0.0   | 2026-04-05 | Documento inicial                                                                                                                                                              |
+> | 1.1.0   | 2026-04-11 | Backend como fuente de verdad; dedup key de alertas incluye `modalidad` (5 campos); `period_order` documentado; constantes de alerta con archivo correcto; pipeline reordenado |

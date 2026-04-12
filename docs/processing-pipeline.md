@@ -1,7 +1,7 @@
 # Flujo de Procesamiento Documental
 
 > Del PDF crudo a datos estructurados y clasificados.
-> Última actualización: 2026-06-04
+> Última actualización: 2026-04-11
 
 ---
 
@@ -11,10 +11,13 @@ El procesamiento transforma un archivo PDF de evaluación docente CENFOTEC en da
 
 La deduplicación opera en dos niveles: **exacta** (SHA-256 del archivo, bloquea carga) y **probabilística** (firma lógica del contenido, detecta sin bloquear).
 
+El backend es la **fuente de verdad** para toda validación de dominio: la determinación de modalidad, `año` y `periodo_orden` ocurre exclusivamente en `app/domain/periodo.py` y se valida con las funciones de enforcement de `app/domain/invariants.py`.
+
 ```
-PDF → Upload → MinIO → Parser → Extracción → Clasificación → PostgreSQL → Detección de duplicados
-                                   ↓                ↓                            ↓
-                               4 extractores    keywords/reglas          firma lógica (best-effort)
+PDF → Upload → MinIO → Parser → Extracción + PeriodoData → Clasificación → PostgreSQL → Detección de duplicados
+                                   ↓               ↓                                ↓
+                               4 extractores   modalidad, año,            firma lógica (best-effort)
+                                               periodo_orden
 ```
 
 ---
@@ -223,15 +226,20 @@ classify_comment(texto: str, tipo: str) -> ClassificationResult
 
 ## 4. Fase de Enriquecimiento (PeriodoData)
 
-Antes de persistir, el parser enriquece la evaluación con datos derivados del período:
+Después del parseo del encabezado y antes de la persistencia, el pipeline enriquece la evaluación con datos temporales derivados del periodo. Esta lógica reside exclusivamente en el backend (`app/domain/periodo.py`) — el frontend **no replica** el parsing de periodos.
 
 ```python
-PeriodoData = {
-    "modalidad": "CUATRIMESTRAL" | "MENSUAL" | "B2B" | "DESCONOCIDA",
-    "año": 2025,
-    "periodo_orden": 1  # Orden dentro del año [BR-AN-40]
-}
+@dataclass(frozen=True)
+class PeriodoInfo:
+    periodo_normalizado: str   # "C2 2025"
+    modalidad: Modalidad       # CUATRIMESTRAL
+    año: int                   # 2025
+    periodo_orden: int         # 2  (C1→1..C3→3, M1→1..M10→10, B2B→0)
+    prefijo: str               # "C"
+    numero: int                # 2
 ```
+
+El campo `periodo_orden` habilita el ordenamiento cronológico correcto sin parsing de strings en capas superiores (SQL `ORDER BY año, periodo_orden` o Python `sort_periodos()`).
 
 La detección de modalidad se basa en regex sobre el código del período (`periodo.py`):
 
