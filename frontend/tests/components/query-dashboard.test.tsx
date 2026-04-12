@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryDashboard } from "@/components/consultas-ia/query-dashboard";
-import type { QueryResponse } from "@/types";
+import { QueryDashboard } from "@/features/evaluacion-docente/components/consultas-ia/query-dashboard";
+import type { QueryResponse } from "@/features/evaluacion-docente/types";
 
 // ── Mock API ───────────────────────────────────────────────────────────
 
-vi.mock("@/lib/api/query", () => ({
+vi.mock("@/features/evaluacion-docente/lib/api/query", () => ({
   postQuery: vi.fn(),
 }));
 
-import { postQuery } from "@/lib/api/query";
+import { postQuery } from "@/features/evaluacion-docente/lib/api/query";
 
 const mockedPostQuery = vi.mocked(postQuery);
 

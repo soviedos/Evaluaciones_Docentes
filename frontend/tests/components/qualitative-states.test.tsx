@@ -4,7 +4,7 @@ import {
   QualitativeSkeleton,
   QualitativeEmpty,
   QualitativeError,
-} from "@/components/sentimiento/qualitative-states";
+} from "@/features/evaluacion-docente/components/sentimiento/qualitative-states";
 
 describe("QualitativeSkeleton", () => {
   it("renders skeleton placeholders", () => {

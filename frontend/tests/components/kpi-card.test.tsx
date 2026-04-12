@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { KpiCard } from "@/components/dashboard/kpi-card";
+import { KpiCard } from "@/features/evaluacion-docente/components/dashboard/kpi-card";
 import { TrendingUp } from "lucide-react";
 
 describe("KpiCard", () => {

@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QualitativeDashboard } from "@/components/sentimiento/qualitative-dashboard";
+import { QualitativeDashboard } from "@/features/evaluacion-docente/components/sentimiento/qualitative-dashboard";
 import type {
   ComentarioAnalisis,
   ResumenCualitativo,
   SentimientoDistribucion,
   TemaDistribucion,
-} from "@/types";
+} from "@/features/evaluacion-docente/types";
 
 // Mock recharts to avoid ResizeObserver issues in jsdom
 vi.mock("recharts", () => ({
@@ -96,7 +96,7 @@ const mockSentimientos: SentimientoDistribucion[] = [
 
 // ── Mock API ───────────────────────────────────────────────────────────
 
-vi.mock("@/lib/api/qualitative", () => ({
+vi.mock("@/features/evaluacion-docente/lib/api/qualitative", () => ({
   fetchFiltrosCualitativos: vi.fn(),
   fetchResumenCualitativo: vi.fn(),
   fetchComentarios: vi.fn(),
@@ -111,7 +111,7 @@ import {
   fetchComentarios,
   fetchDistribucionTemas,
   fetchDistribucionSentimiento,
-} from "@/lib/api/qualitative";
+} from "@/features/evaluacion-docente/lib/api/qualitative";
 
 const mockedFetchFiltros = vi.mocked(fetchFiltrosCualitativos);
 const mockedFetchResumen = vi.mocked(fetchResumenCualitativo);

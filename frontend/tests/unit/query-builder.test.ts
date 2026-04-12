@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildQuery } from "@/lib/api/query-builder";
+import { buildQuery } from "@/features/evaluacion-docente/lib/api/query-builder";
 
 describe("buildQuery", () => {
   it("builds query string from params", () => {

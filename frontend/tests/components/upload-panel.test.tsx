@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { UploadPanel } from "@/components/upload/upload-panel";
+import { UploadPanel } from "@/features/evaluacion-docente/components/upload/upload-panel";
 
 // Mock the API module
-vi.mock("@/lib/api/documents", () => ({
+vi.mock("@/features/evaluacion-docente/lib/api/documents", () => ({
   uploadDocument: vi.fn(),
   ApiClientError: class ApiClientError extends Error {
     body: unknown;
@@ -16,7 +16,7 @@ vi.mock("@/lib/api/documents", () => ({
   },
 }));
 
-import { uploadDocument } from "@/lib/api/documents";
+import { uploadDocument } from "@/features/evaluacion-docente/lib/api/documents";
 const mockUpload = vi.mocked(uploadDocument);
 
 function makePdf(name = "test.pdf") {
@@ -110,7 +110,7 @@ describe("UploadPanel", () => {
   });
 
   it("shows error message on upload failure", async () => {
-    const { ApiClientError } = await import("@/lib/api/documents");
+    const { ApiClientError } = await import("@/features/evaluacion-docente/lib/api/documents");
     mockUpload.mockRejectedValue(
       new ApiClientError(409, "Conflict", { detail: "Archivo ya existe" }),
     );

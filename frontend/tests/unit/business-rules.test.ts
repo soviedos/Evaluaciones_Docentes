@@ -19,7 +19,7 @@ import {
   tipoComentarioLabel,
   tipoComentarioBadgeStyle,
   alertaEstadoLabel,
-} from "@/lib/business-rules";
+} from "@/features/evaluacion-docente/lib/business-rules";
 
 // ════════════════════════════════════════════════════════════════
 //  Modalidad

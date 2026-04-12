@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryHistory } from "@/components/consultas-ia/query-history";
-import type { QueryHistoryEntry, QueryResponse } from "@/types";
+import { QueryHistory } from "@/features/evaluacion-docente/components/consultas-ia/query-history";
+import type { QueryHistoryEntry, QueryResponse } from "@/features/evaluacion-docente/types";
 
 const baseResponse: QueryResponse = {
   answer: "Respuesta de prueba",

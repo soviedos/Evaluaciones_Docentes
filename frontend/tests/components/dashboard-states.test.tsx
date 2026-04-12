@@ -4,7 +4,7 @@ import {
   DashboardEmpty,
   DashboardError,
   DashboardSkeleton,
-} from "@/components/dashboard/dashboard-states";
+} from "@/features/evaluacion-docente/components/dashboard/dashboard-states";
 
 describe("DashboardEmpty", () => {
   it("renders the empty state message", () => {

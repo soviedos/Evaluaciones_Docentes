@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { DocumentTable } from "@/components/biblioteca/document-table";
-import type { Documento } from "@/types";
+import { DocumentTable } from "@/features/evaluacion-docente/components/biblioteca/document-table";
+import type { Documento } from "@/features/evaluacion-docente/types";
 
 const mockSort = vi.fn();
 

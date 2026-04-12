@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { PeriodoMetrica, PeriodoOption } from "@/types";
+import type { PeriodoMetrica, PeriodoOption } from "@/features/evaluacion-docente/types";
 
 // ── PeriodoMetrica ──────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { DropZone } from "@/components/upload/drop-zone";
+import { DropZone } from "@/features/evaluacion-docente/components/upload/drop-zone";
 
 describe("DropZone", () => {
   it("renders instructions text", () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { CommentTable } from "@/components/sentimiento/comment-table";
-import type { ComentarioAnalisis } from "@/types";
+import { CommentTable } from "@/features/evaluacion-docente/components/sentimiento/comment-table";
+import type { ComentarioAnalisis } from "@/features/evaluacion-docente/types";
 
 const mockComments: ComentarioAnalisis[] = [
   {
