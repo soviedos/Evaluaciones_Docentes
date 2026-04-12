@@ -14,6 +14,8 @@
 - **Detección de duplicados probables** — firma de contenido (docente + periodo + cursos + puntajes) sin bloquear la carga
 - **Parser determinístico** — extracción de encabezados, métricas por dimensión, cursos y comentarios
 - **Clasificación cualitativa** — detección de tema, sentimiento y tipo (fortaleza/mejora/observación)
+- **Validación de dominio centralizada** — modalidad, periodo, `año` y `periodo_orden` se validan exclusivamente en el backend; el frontend consume valores pre-calculados sin duplicar lógica
+- **Motor de alertas** — 4 detectores (bajo desempeño, caída, sentimiento, patrón) con deduplicación de 5 campos, aislamiento por modalidad y ventana de solo los 2 últimos periodos
 - **Consultas IA** — endpoint RAG que recupera métricas + comentarios y genera respuestas con Gemini
 - **Dashboards interactivos** — estadísticos (KPIs, radar, tendencias) y de sentimiento (temas, distribución)
 - **Auditoría completa** — cada llamada a Gemini se registra con prompt, tokens, latencia y resultado
@@ -103,6 +105,13 @@ make clean        # Limpiar caches y artefactos
 ---
 
 ## Estructura del Proyecto
+
+### Principios de arquitectura
+
+- **Backend como fuente de verdad** — Toda validación de modalidad, periodo, año y `periodo_orden` se ejecuta en `app/domain/` (invariants, periodo, alert_rules). El frontend no duplica esta lógica.
+- **Aislamiento por modalidad** — CUATRIMESTRAL, MENSUAL y B2B nunca se mezclan en cálculos, alertas ni dashboards.
+- **Alertas con ventana temporal** — Solo los 2 últimos periodos de cada modalidad participan en detección de alertas.
+- **Deduplicación de alertas** — Clave única de 5 campos: `(docente, curso, periodo, tipo_alerta, modalidad)`.
 
 ```
 Evaluaciones_Docentes/

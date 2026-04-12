@@ -1,7 +1,7 @@
 # Ordenamiento Cronológico — Documentación Técnica
 
 > **Reglas de negocio:** `[BR-AN-40]` – `[BR-AN-42]`, `[VZ-20]` – `[VZ-21]`  
-> **Última actualización:** 2026-04-05  
+> **Última actualización:** 2026-04-11  
 > **Estado:** Implementado y con tests
 
 ---
@@ -52,7 +52,7 @@ MT1 2025 → MT2 2025 → … → MT10 2025 → MT1 2026
 
 ## 3. Diseño de la solución
 
-### Estrategia: ordenar en Python/TypeScript, no en SQL
+### Estrategia: ordenar en Python, exponer `año` y `periodo_orden` en la API
 
 **¿Por qué no una columna computada o `ORDER BY` SQL?**
 
@@ -62,7 +62,7 @@ El formato de periodo es un string libre (`"C2 2025"`, `"M10 2024"`, `"B2B-EMPRE
 - Requeriría migración adicional
 - Dificultaría el testing
 
-**Solución elegida:** Fetch sin ORDER BY → sort en Python usando `sort_periodos()`.
+**Solución elegida:** El backend calcula `año` y `periodo_orden` durante el parseo y los persiste en la tabla `evaluaciones`. Los endpoints de analytics exponen estos campos en los DTOs (`PeriodoMetrica`, `PeriodoOption`), permitiendo al frontend ordenar sin duplicar lógica de parsing.
 
 ```
 ┌──────────┐     ┌──────────┐     ┌──────────────┐     ┌──────────┐
@@ -71,7 +71,7 @@ El formato de periodo es un string libre (`"C2 2025"`, `"M10 2024"`, `"B2B-EMPRE
 └──────────┘     └──────────┘     └──────────────┘     └──────────┘
 ```
 
-El frontend aplica un **re-sort defensivo** adicional para garantizar orden incluso si el backend fallara.
+El frontend aplica un **re-sort defensivo** adicional usando `año` y `periodo_orden` recibidos del backend, sin necesidad de parsear strings de periodo.
 
 ---
 
