@@ -10,19 +10,16 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from app.api.deps import DbSession
 from app.api.rate_limit import query_rate_limiter
 from app.api.v1.router import api_router
-from app.core.cache import analytics_cache
-from app.core.config import settings
-from app.core.logging import get_logger, setup_logging
-from app.domain.exceptions import (
-    DomainError,
-    DuplicateError,
+from app.modules.evaluacion_docente.domain.exceptions import (
     GeminiError,
     GeminiRateLimitError,
     GeminiTimeoutError,
     GeminiUnavailableError,
-    NotFoundError,
-    ValidationError,
 )
+from app.shared.core.cache import analytics_cache
+from app.shared.core.config import settings
+from app.shared.core.logging import get_logger, setup_logging
+from app.shared.domain.exceptions import DomainError, DuplicateError, NotFoundError, ValidationError
 
 logger = get_logger(__name__)
 
