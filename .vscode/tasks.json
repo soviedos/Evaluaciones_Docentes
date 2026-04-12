@@ -1,0 +1,52 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Backend: Tests (unit)",
+      "type": "shell",
+      "command": ".venv/bin/python -m pytest tests/unit/ --noconftest -q",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Tests (all)",
+      "type": "shell",
+      "command": ".venv/bin/python -m pytest tests/ -q",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Lint (ruff)",
+      "type": "shell",
+      "command": ".venv/bin/ruff check .",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: Tests",
+      "type": "shell",
+      "command": "npx vitest run",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: Type Check",
+      "type": "shell",
+      "command": "npx tsc --noEmit",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "group": "test",
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "Infra: Start (docker compose)",
+      "type": "shell",
+      "command": "make infra",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    }
+  ]
+}
