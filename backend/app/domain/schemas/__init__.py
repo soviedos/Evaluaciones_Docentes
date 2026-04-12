@@ -1,4 +1,5 @@
-from app.domain.schemas.analytics import (
+"""Re-export barrel — schemas from shared + module canonical locations."""
+from app.modules.evaluacion_docente.domain.schemas.analytics import (
     DimensionPromedio,
     DocentePromedio,
     PeriodoMetrica,
@@ -6,14 +7,7 @@ from app.domain.schemas.analytics import (
     RankingDocente,
     ResumenGeneral,
 )
-from app.domain.schemas.common import (
-    BaseSchema,
-    ErrorResponse,
-    HealthResponse,
-    PaginatedItems,
-    PaginatedResponse,
-)
-from app.domain.schemas.documento import (
+from app.modules.evaluacion_docente.domain.schemas.documento import (
     DocumentoCreate,
     DocumentoFilterParams,
     DocumentoList,
@@ -23,7 +17,14 @@ from app.domain.schemas.documento import (
     DuplicadoRead,
     DuplicadoResumen,
 )
-from app.domain.schemas.evaluacion import EvaluacionList, EvaluacionRead
+from app.modules.evaluacion_docente.domain.schemas.evaluacion import EvaluacionList, EvaluacionRead
+from app.shared.domain.schemas.common import (
+    BaseSchema,
+    ErrorResponse,
+    HealthResponse,
+    PaginatedItems,
+    PaginatedResponse,
+)
 
 __all__ = [
     "BaseSchema",

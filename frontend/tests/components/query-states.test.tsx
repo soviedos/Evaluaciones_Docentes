@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import {
   QuerySkeleton,
   QueryError,
-} from "@/components/consultas-ia/query-states";
+} from "@/features/evaluacion-docente/components/consultas-ia/query-states";
 
 describe("QuerySkeleton", () => {
   it("renders skeleton placeholders", () => {

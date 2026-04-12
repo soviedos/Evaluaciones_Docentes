@@ -6,9 +6,9 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Import all entities so Alembic detects them
-import app.domain.entities  # noqa: F401
-from app.core.config import settings
-from app.domain.entities.base import Base
+import app.shared.domain.entities  # noqa: F401
+from app.shared.core.config import settings
+from app.shared.domain.entities.base import Base
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

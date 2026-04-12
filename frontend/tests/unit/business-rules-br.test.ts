@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { compareSeveridad } from "@/lib/business-rules";
+import { compareSeveridad } from "@/features/evaluacion-docente/lib/business-rules";
 
 // ════════════════════════════════════════════════════════════════
 //  1. compareSeveridad stability

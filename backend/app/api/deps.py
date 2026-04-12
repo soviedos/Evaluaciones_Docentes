@@ -10,11 +10,11 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
-from app.domain.exceptions import GeminiUnavailableError
-from app.infrastructure.database.session import get_db
-from app.infrastructure.external.gemini_gateway import GeminiGateway
-from app.infrastructure.storage.file_storage import FileStorage, MinioFileStorage
+from app.modules.evaluacion_docente.domain.exceptions import GeminiUnavailableError
+from app.modules.evaluacion_docente.infrastructure.external.gemini_gateway import GeminiGateway
+from app.shared.core.config import settings
+from app.shared.infrastructure.database.session import get_db
+from app.shared.infrastructure.storage.file_storage import FileStorage, MinioFileStorage
 
 # Typed annotation for route-handler signatures:
 #   async def my_route(db: DbSession): ...
@@ -41,5 +41,7 @@ def get_gemini_gateway() -> GeminiGateway:
         raise GeminiUnavailableError(detail="GEMINI_API_KEY no configurada")
     return _create_gemini_gateway()
 
+
+GeminiDep = Annotated[GeminiGateway, Depends(get_gemini_gateway)]
 
 GeminiDep = Annotated[GeminiGateway, Depends(get_gemini_gateway)]

@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CommandCenter } from "@/components/dashboard/command-center";
+import { CommandCenter } from "@/features/evaluacion-docente/components/dashboard/command-center";
 import type {
   AlertaResponse,
   AlertaSummary,
   DashboardSummary,
   PaginatedResponse,
-} from "@/types";
+} from "@/features/evaluacion-docente/types";
 
 // ── Mock recharts ───────────────────────────────────────────────
 
@@ -27,17 +27,17 @@ vi.mock("recharts", () => ({
 
 // ── Mock API ────────────────────────────────────────────────────
 
-vi.mock("@/lib/api/dashboard", () => ({
+vi.mock("@/features/evaluacion-docente/lib/api/dashboard", () => ({
   fetchDashboardSummary: vi.fn(),
 }));
 
-vi.mock("@/lib/api/alertas", () => ({
+vi.mock("@/features/evaluacion-docente/lib/api/alertas", () => ({
   fetchAlertSummary: vi.fn(),
   fetchAlerts: vi.fn(),
 }));
 
-import { fetchDashboardSummary } from "@/lib/api/dashboard";
-import { fetchAlertSummary, fetchAlerts } from "@/lib/api/alertas";
+import { fetchDashboardSummary } from "@/features/evaluacion-docente/lib/api/dashboard";
+import { fetchAlertSummary, fetchAlerts } from "@/features/evaluacion-docente/lib/api/alertas";
 
 const mockedFetchDashboard = vi.mocked(fetchDashboardSummary);
 const mockedFetchAlertSummary = vi.mocked(fetchAlertSummary);

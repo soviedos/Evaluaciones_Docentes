@@ -1,0 +1,54 @@
+"""File storage abstraction — async interface with MinIO implementation."""
+
+import asyncio
+import io
+from typing import Protocol, runtime_checkable
+
+from minio import Minio
+
+from app.shared.core.config import settings
+from app.shared.infrastructure.storage.minio_client import get_minio_client
+
+
+@runtime_checkable
+class FileStorage(Protocol):
+    """Protocol for file storage operations — implement for any backend."""
+
+    async def upload(self, path: str, data: bytes, content_type: str) -> str: ...
+
+    async def download(self, path: str) -> bytes: ...
+
+    async def delete(self, path: str) -> None: ...
+
+
+class MinioFileStorage(FileStorage):
+    """MinIO-backed file storage — wraps sync client in async threads."""
+
+    def __init__(self, client: Minio | None = None, bucket: str | None = None) -> None:
+        self.client = client or get_minio_client()
+        self.bucket = bucket or settings.minio_bucket
+
+    async def upload(self, path: str, data: bytes, content_type: str) -> str:
+        await asyncio.to_thread(
+            self.client.put_object,
+            self.bucket,
+            path,
+            io.BytesIO(data),
+            len(data),
+            content_type,
+        )
+        return path
+
+    async def download(self, path: str) -> bytes:
+        def _download() -> bytes:
+            response = self.client.get_object(self.bucket, path)
+            try:
+                return response.read()
+            finally:
+                response.close()
+                response.release_conn()
+
+        return await asyncio.to_thread(_download)
+
+    async def delete(self, path: str) -> None:
+        await asyncio.to_thread(self.client.remove_object, self.bucket, path)

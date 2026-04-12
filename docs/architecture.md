@@ -314,46 +314,47 @@ backend/app/
 │   │   └── minio_client.py        → Cliente MinIO (upload/download/delete)
 │   └── tasks/
 │       └── celery_app.py          → Configuración Celery + Redis (reservado para migración futura)
-└── core/
-    ├── config.py                  → Settings (BaseSettings + validación producción)
-    ├── cache.py                   → Decorador @cached con TTL para Redis
-    └── logging.py                 → Configuración de logger
+└── core/                          → Shims (redirigen a shared/core/)
+    ├── config.py                  → → app/shared/core/config.py
+    ├── cache.py                   → → app/shared/core/cache.py
+    └── logging.py                 → → app/shared/core/logging.py
 ```
+
+> **Nota:** La estructura modular coloca el código canónico en `app/shared/` (shared kernel) y `app/modules/evaluacion_docente/` (módulo). Los directorios `app/core/`, `app/domain/` y `app/infrastructure/` funcionan como shims de compatibilidad que redirigen a las ubicaciones canónicas.
 
 ### 5.2 Frontend (Next.js App Router)
 
 ```
 frontend/src/
 ├── app/                             → Pages (App Router MPA)
-│   ├── (dashboard)/
-│   │   ├── inicio/page.tsx          → Homepage con dashboard ejecutivo
-│   │   ├── carga/page.tsx           → Subida de PDFs con drag & drop
-│   │   ├── biblioteca/page.tsx      → Biblioteca de documentos
-│   │   ├── estadisticas/page.tsx    → Dashboard analítico (métricas, gráficas)
-│   │   ├── sentimiento/page.tsx     → Análisis cualitativo (comentarios, sentimiento)
-│   │   ├── docentes/page.tsx        → Ranking y detalles de docentes
-│   │   ├── reportes/page.tsx        → Alertas y reportes
-│   │   ├── consultas-ia/page.tsx    → Consultas inteligentes (RAG + Gemini)
+│   ├── (platform)/
+│   │   ├── dashboard/page.tsx       → Dashboard de plataforma
+│   │   ├── evaluacion-docente/
+│   │   │   ├── inicio/page.tsx      → Dashboard ejecutivo
+│   │   │   ├── carga/page.tsx       → Subida de PDFs con drag & drop
+│   │   │   ├── biblioteca/page.tsx  → Biblioteca de documentos
+│   │   │   ├── estadisticas/page.tsx→ Dashboard analítico
+│   │   │   ├── sentimiento/page.tsx → Análisis cualitativo
+│   │   │   ├── docentes/page.tsx    → Ranking y detalles de docentes
+│   │   │   ├── reportes/page.tsx    → Alertas y reportes
+│   │   │   └── consultas-ia/page.tsx→ Consultas inteligentes (RAG + Gemini)
 │   │   └── layout.tsx               → Sidebar + navbar del dashboard
 │   ├── layout.tsx                   → Layout raíz (html, head, fonts)
-│   └── page.tsx                     → Redirect a inicio
+│   └── page.tsx                     → Redirect a /dashboard
+├── features/
+│   └── evaluacion-docente/          → Módulo evaluación docente
+│       ├── components/              → KPICard, CommandCenter, UploadPanel, etc.
+│       ├── hooks/                   → useQuery, useDashboard, useDocuments, etc.
+│       ├── lib/api/                 → Clientes tipados (analytics, documents, etc.)
+│       └── types/                   → TypeScript interfaces del módulo
 ├── components/
 │   ├── ui/                          → shadcn/ui (Button, Card, Dialog, etc.)
-│   ├── dashboard/                   → KPICard, CommandCenter, RankingTable, Charts
-│   ├── consultas-ia/                → QueryInput, QueryResponse, QueryEvidence
-│   ├── upload/                      → UploadPanel, DropZone, FileItem
-│   ├── sentimiento/                 → QualitativeDashboard, states, distribuciones
-│   └── layout/                      → Sidebar, AppSidebar, ThemeToggle
-├── hooks/                           → useQuery, useUpload, useDebounce
+│   └── layout/                      → Sidebar, Navbar, Footer
+├── hooks/                           → Hooks compartidos (useApiFetch)
 ├── lib/
-│   ├── api/                         → Clientes tipados: analytics, qualitative, documents,
-│   │                                  dashboard, alertas, query
 │   ├── api-client.ts                → Fetch wrapper con manejo de errores
-│   ├── business-rules.ts            → 150+ reglas de negocio (BR-*)
-│   ├── periodo-sort.ts              → Ordenamiento de períodos
 │   └── utils.ts                     → cn(), formatters
-├── styles/                          → Tailwind CSS v4 globals
-└── types/                           → TypeScript interfaces para API schemas
+└── styles/                          → Tailwind CSS v4 globals
 ```
 
 ### 5.3 Infraestructura

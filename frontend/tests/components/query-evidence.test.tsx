@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { QueryEvidenceList } from "@/components/consultas-ia/query-evidence";
-import type { QueryEvidence } from "@/types";
+import { QueryEvidenceList } from "@/features/evaluacion-docente/components/consultas-ia/query-evidence";
+import type { QueryEvidence } from "@/features/evaluacion-docente/types";
 
 const mockEvidence: QueryEvidence[] = [
   {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { RankingTable } from "@/components/dashboard/ranking-table";
-import type { RankingDocente } from "@/types";
+import { RankingTable } from "@/features/evaluacion-docente/components/dashboard/ranking-table";
+import type { RankingDocente } from "@/features/evaluacion-docente/types";
 
 const mockData: RankingDocente[] = [
   { posicion: 1, docente_nombre: "Prof. López", promedio: 95.2, evaluaciones_count: 3 },

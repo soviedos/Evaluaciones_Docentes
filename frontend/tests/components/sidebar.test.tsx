@@ -5,7 +5,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/inicio",
+  usePathname: () => "/evaluacion-docente/inicio",
 }));
 
 describe("Sidebar", () => {
@@ -16,11 +16,12 @@ describe("Sidebar", () => {
     expect(screen.getByAltText("Universidad CENFOTEC")).toBeInTheDocument();
   });
 
-  it("renders all 8 navigation items", () => {
+  it("renders all 9 navigation items", () => {
     render(<Sidebar {...defaultProps} />);
 
     const expectedLabels = [
-      "Inicio",
+      "Dashboard",
+      "Centro de Mando",
       "Carga de PDFs",
       "Biblioteca",
       "Docentes",
@@ -37,22 +38,24 @@ describe("Sidebar", () => {
 
   it("renders group titles", () => {
     render(<Sidebar {...defaultProps} />);
-    expect(screen.getByText("Principal")).toBeInTheDocument();
-    expect(screen.getByText("Análisis")).toBeInTheDocument();
+    expect(screen.getByText("Plataforma")).toBeInTheDocument();
+    expect(screen.getByText("Evaluación Docente")).toBeInTheDocument();
   });
 
   it("highlights the active route", () => {
     render(<Sidebar {...defaultProps} />);
-    const activeLink = screen.getByText("Inicio").closest("a");
-    expect(activeLink).toHaveAttribute("href", "/inicio");
+    const activeLink = screen.getByText("Centro de Mando").closest("a");
+    expect(activeLink).toHaveAttribute("href", "/evaluacion-docente/inicio");
     // Active link should have the accent background class
     expect(activeLink?.className).toContain("bg-sidebar-accent");
   });
 
   it("hides labels when collapsed", () => {
     render(<Sidebar {...{ ...defaultProps, collapsed: true }} />);
-    expect(screen.queryByAltText("Universidad CENFOTEC")).not.toBeInTheDocument();
-    expect(screen.queryByText("Inicio")).not.toBeInTheDocument();
+    expect(
+      screen.queryByAltText("Universidad CENFOTEC"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Centro de Mando")).not.toBeInTheDocument();
   });
 
   it("calls onToggle when collapse button is clicked", async () => {

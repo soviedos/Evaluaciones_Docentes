@@ -1,26 +1,36 @@
-# Evaluaciones Docentes
+# Gestión Académica
 
-> Plataforma web interna para el análisis automatizado de evaluaciones docentes a partir de documentos PDF, potenciada por inteligencia artificial.
+> Plataforma modular para la gestión académica institucional — monolito modular con módulos independientes por dominio.
 
 ---
 
 ## Descripción
 
-**Evaluaciones Docentes** es un sistema institucional diseñado para recibir evaluaciones docentes en formato PDF, procesarlas de forma automática y extraer información estructurada. Los datos cuantitativos se extraen con un **parser determinístico** (PyMuPDF), mientras que los comentarios cualitativos se analizan con **Gemini API**. Los resultados se almacenan en PostgreSQL con soporte para búsqueda semántica (pgvector), lo que permite generar reportes, visualizar tendencias y consultar evaluaciones en lenguaje natural.
+**Gestión Académica** (`cenfotec-gestion-academica`) es una plataforma institucional diseñada como un monolito modular. Cada módulo encapsula un dominio académico completo (entidades, servicios, API, UI) y se comunica con los demás exclusivamente a través de un shared kernel.
 
-### Características principales
+El primer módulo implementado — **Evaluación Docente** — recibe evaluaciones en formato PDF, las procesa automáticamente y extrae información estructurada. Los datos cuantitativos se extraen con un parser determinístico (PyMuPDF) y los comentarios cualitativos se analizan con Gemini API. Los resultados se almacenan en PostgreSQL con soporte para búsqueda semántica (pgvector).
+
+### Módulos
+
+| Módulo                          | Estado       | Descripción                                                      |
+| ------------------------------- | ------------ | ---------------------------------------------------------------- |
+| **Evaluación Docente**          | Implementado | Procesamiento de PDFs, análisis cualitativo, dashboards, alertas |
+| **Auth**                        | Transversal  | Autenticación y autorización (compartido por todos los módulos)  |
+| **Control Docente**             | Planificado  | Seguimiento de cargas y cumplimiento docente                     |
+| **Convalidaciones**             | Planificado  | Gestión de equivalencias y convalidaciones de cursos             |
+| **Planificación Cuatrimestral** | Planificado  | Apertura de secciones y asignación cuatrimestral                 |
+| **Planificación Mensual**       | Planificado  | Programación y control mensual de cursos                         |
+| **Planificación B2B**           | Planificado  | Programación de cursos para clientes corporativos                |
+
+### Características del módulo Evaluación Docente
 
 - **Carga de PDFs** con deduplicación SHA-256 y detección de duplicados probables por firma lógica
-- **Detección de duplicados probables** — firma de contenido (docente + periodo + cursos + puntajes) sin bloquear la carga
 - **Parser determinístico** — extracción de encabezados, métricas por dimensión, cursos y comentarios
 - **Clasificación cualitativa** — detección de tema, sentimiento y tipo (fortaleza/mejora/observación)
-- **Validación de dominio centralizada** — modalidad, periodo, `año` y `periodo_orden` se validan exclusivamente en el backend; el frontend consume valores pre-calculados sin duplicar lógica
-- **Motor de alertas** — 4 detectores (bajo desempeño, caída, sentimiento, patrón) con deduplicación de 5 campos, aislamiento por modalidad y ventana de solo los 2 últimos periodos
-- **Consultas IA** — endpoint RAG que recupera métricas + comentarios y genera respuestas con Gemini
-- **Dashboards interactivos** — estadísticos (KPIs, radar, tendencias) y de sentimiento (temas, distribución)
+- **Motor de alertas** — 4 detectores (bajo desempeño, caída, sentimiento, patrón) con deduplicación y aislamiento por modalidad
+- **Consultas IA** — endpoint RAG con retrieval de métricas + comentarios y respuestas generadas por Gemini
+- **Dashboards interactivos** — KPIs, radar de dimensiones, tendencias y análisis de sentimiento
 - **Auditoría completa** — cada llamada a Gemini se registra con prompt, tokens, latencia y resultado
-- **Procesamiento asíncrono** en segundo plano (FastAPI BackgroundTasks; Celery disponible como perfil opcional)
-- **Arquitectura on-premise**, sin dependencia de servicios cloud externos (excepto Gemini API)
 
 ---
 
@@ -108,27 +118,25 @@ make clean        # Limpiar caches y artefactos
 
 ### Principios de arquitectura
 
-- **Backend como fuente de verdad** — Toda validación de modalidad, periodo, año y `periodo_orden` se ejecuta en `app/domain/` (invariants, periodo, alert_rules). El frontend no duplica esta lógica.
+- **Monolito modular** — Cada módulo es un bounded context independiente con API, dominio, servicios e infraestructura propios.
+- **Shared kernel** — Código transversal (config, entidades base, DB engine) vive en `app/shared/` y es consumido por todos los módulos.
+- **Backend como fuente de verdad** — Toda validación de dominio se ejecuta en la capa correspondiente de cada módulo. El frontend consume valores pre-calculados.
 - **Aislamiento por modalidad** — CUATRIMESTRAL, MENSUAL y B2B nunca se mezclan en cálculos, alertas ni dashboards.
-- **Alertas con ventana temporal** — Solo los 2 últimos periodos de cada modalidad participan en detección de alertas.
-- **Deduplicación de alertas** — Clave única de 5 campos: `(docente, curso, periodo, tipo_alerta, modalidad)`.
 
 ```
-Evaluaciones_Docentes/
+cenfotec-gestion-academica/
 ├── frontend/             → Aplicación web (Next.js 16 + TypeScript)
 │   ├── src/app/          → Páginas (App Router con route groups)
-│   ├── src/components/   → Componentes React por dominio
-│   ├── src/hooks/        → Custom hooks (data fetching)
-│   ├── src/lib/          → API client, utilidades
-│   ├── src/types/        → Interfaces TypeScript
+│   ├── src/features/     → Módulos por dominio (evaluacion-docente, auth, ...)
+│   ├── src/components/   → Componentes compartidos (ui, layout)
+│   ├── src/hooks/        → Custom hooks compartidos
+│   ├── src/lib/          → API client, utilidades compartidas
 │   ├── tests/            → Unit + component tests (Vitest)
 │   └── e2e/              → Tests E2E (Playwright)
 ├── backend/              → API REST (FastAPI + Python 3.12)
-│   ├── app/api/          → Endpoints y dependencias
-│   ├── app/application/  → Servicios, parsing, clasificación
-│   ├── app/core/         → Config, logging
-│   ├── app/domain/       → Entidades, schemas, excepciones
-│   ├── app/infrastructure/ → DB, storage, Gemini, tasks
+│   ├── app/api/          → Endpoints compartidos y dependencias
+│   ├── app/modules/      → Módulos por dominio (evaluacion_docente, auth, ...)
+│   ├── app/shared/       → Shared kernel (core, domain base, infra)
 │   └── tests/            → Unit, integration, API tests (pytest)
 ├── infra/                → Docker Compose, Nginx, scripts
 ├── docs/                 → Documentación técnica
@@ -140,17 +148,19 @@ Evaluaciones_Docentes/
 
 ## Documentación
 
-| Documento                                                  | Descripción                                        |
-| ---------------------------------------------------------- | -------------------------------------------------- |
-| [docs/architecture.md](docs/architecture.md)               | Arquitectura del sistema y diagrama de componentes |
-| [docs/local-development.md](docs/local-development.md)     | Guía completa de desarrollo local                  |
-| [docs/data-model.md](docs/data-model.md)                   | Modelo de datos y diagrama ER                      |
-| [docs/processing-pipeline.md](docs/processing-pipeline.md) | Flujo de procesamiento documental                  |
-| [docs/testing-strategy.md](docs/testing-strategy.md)       | Estrategia y convenciones de testing               |
-| [docs/deployment.md](docs/deployment.md)                   | Guía de despliegue on-premise                      |
-| [docs/gemini-integration.md](docs/gemini-integration.md)   | Guía de integración con Gemini API                 |
-| [docs/api-contracts.md](docs/api-contracts.md)             | Contratos de la API REST                           |
-| [docs/adr/](docs/adr/)                                     | Registros de decisiones arquitectónicas            |
+| Documento                                                                        | Descripción                                    |
+| -------------------------------------------------------------------------------- | ---------------------------------------------- |
+| [docs/architecture/system-overview.md](docs/architecture/system-overview.md)     | Visión general del sistema y mapa de módulos   |
+| [docs/architecture/project-structure.md](docs/architecture/project-structure.md) | Estructura de directorios detallada            |
+| [docs/architecture.md](docs/architecture.md)                                     | Arquitectura técnica y diagrama de componentes |
+| [docs/local-development.md](docs/local-development.md)                           | Guía completa de desarrollo local              |
+| [docs/data-model.md](docs/data-model.md)                                         | Modelo de datos y diagrama ER                  |
+| [docs/processing-pipeline.md](docs/processing-pipeline.md)                       | Flujo de procesamiento documental              |
+| [docs/testing-strategy.md](docs/testing-strategy.md)                             | Estrategia y convenciones de testing           |
+| [docs/deployment.md](docs/deployment.md)                                         | Guía de despliegue on-premise                  |
+| [docs/gemini-integration.md](docs/gemini-integration.md)                         | Guía de integración con Gemini API             |
+| [docs/api-contracts.md](docs/api-contracts.md)                                   | Contratos de la API REST                       |
+| [docs/adr/](docs/adr/)                                                           | Registros de decisiones arquitectónicas        |
 
 ---
 

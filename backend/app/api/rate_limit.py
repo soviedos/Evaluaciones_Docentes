@@ -16,7 +16,7 @@ from threading import Lock
 import redis.asyncio as aioredis
 from fastapi import HTTPException, Request
 
-from app.core.config import settings
+from app.shared.core.config import settings
 
 logger = logging.getLogger(__name__)
 

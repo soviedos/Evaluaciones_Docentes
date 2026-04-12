@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { PaginationBar } from "@/components/biblioteca/pagination-bar";
+import { PaginationBar } from "@/features/evaluacion-docente/components/biblioteca/pagination-bar";
 
 describe("PaginationBar", () => {
   const defaultProps = {

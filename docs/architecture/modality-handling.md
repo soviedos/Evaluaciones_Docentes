@@ -342,7 +342,7 @@ const RE_B2B = /^B2B[\s-].+/i;
 
 ## 9. Componente ModalidadSelector
 
-**Archivo:** `src/components/dashboard/command-center.tsx`
+**Archivo:** `src/features/evaluacion-docente/components/dashboard/command-center.tsx`
 
 Componente local que renderiza un grupo de botones tipo "tab" para filtrar por modalidad:
 

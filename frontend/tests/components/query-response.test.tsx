@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { QueryResponseCard } from "@/components/consultas-ia/query-response";
-import type { QueryResponse } from "@/types";
+import { QueryResponseCard } from "@/features/evaluacion-docente/components/consultas-ia/query-response";
+import type { QueryResponse } from "@/features/evaluacion-docente/types";
 
 const mockResponse: QueryResponse = {
   answer: "El docente tiene un desempeño destacado en comunicación.",

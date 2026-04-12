@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
+import { AnalyticsDashboard } from "@/features/evaluacion-docente/components/dashboard/analytics-dashboard";
 import type {
   DimensionPromedio,
   DocentePromedio,
   PeriodoMetrica,
   RankingDocente,
   ResumenGeneral,
-} from "@/types";
+} from "@/features/evaluacion-docente/types";
 
 // Mock recharts to avoid ResizeObserver issues in jsdom
 vi.mock("recharts", () => ({
@@ -86,7 +86,7 @@ const mockRanking: RankingDocente[] = [
   },
 ];
 
-vi.mock("@/lib/api/analytics", () => ({
+vi.mock("@/features/evaluacion-docente/lib/api/analytics", () => ({
   fetchResumen: vi.fn(),
   fetchDocentePromedios: vi.fn(),
   fetchDimensiones: vi.fn(),
@@ -104,7 +104,7 @@ import {
   fetchRanking,
   fetchEscuelas,
   fetchCursos,
-} from "@/lib/api/analytics";
+} from "@/features/evaluacion-docente/lib/api/analytics";
 
 const mockedFetchResumen = vi.mocked(fetchResumen);
 const mockedFetchDocentes = vi.mocked(fetchDocentePromedios);

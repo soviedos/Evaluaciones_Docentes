@@ -5,7 +5,7 @@ import {
   TipoBadge,
   TemaBadge,
   temaLabel,
-} from "@/components/sentimiento/badges";
+} from "@/features/evaluacion-docente/components/sentimiento/badges";
 
 describe("SentimentBadge", () => {
   it("renders positivo badge with correct text", () => {

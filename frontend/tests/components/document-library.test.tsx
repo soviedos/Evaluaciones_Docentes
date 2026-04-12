@@ -1,17 +1,17 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { DocumentLibrary } from "@/components/biblioteca/document-library";
-import type { Documento, PaginatedResponse } from "@/types";
+import { DocumentLibrary } from "@/features/evaluacion-docente/components/biblioteca/document-library";
+import type { Documento, PaginatedResponse } from "@/features/evaluacion-docente/types";
 
 // Mock the API module
-vi.mock("@/lib/api/documents", () => ({
+vi.mock("@/features/evaluacion-docente/lib/api/documents", () => ({
   listDocuments: vi.fn(),
   listPeriodos: vi.fn().mockResolvedValue([]),
   deleteDocument: vi.fn(),
 }));
 
-import { listDocuments } from "@/lib/api/documents";
+import { listDocuments } from "@/features/evaluacion-docente/lib/api/documents";
 
 const mockListDocuments = vi.mocked(listDocuments);
 

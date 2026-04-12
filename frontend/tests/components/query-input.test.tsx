@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryInput } from "@/components/consultas-ia/query-input";
+import { QueryInput } from "@/features/evaluacion-docente/components/consultas-ia/query-input";
 
 describe("QueryInput", () => {
   it("renders textarea and submit button", () => {
