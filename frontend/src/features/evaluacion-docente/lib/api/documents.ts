@@ -33,6 +33,14 @@ export async function deleteDocument(id: string): Promise<void> {
   await apiClient.delete(`/api/v1/documentos/${id}`);
 }
 
+export async function bulkDeleteDocuments(
+  ids: string[],
+): Promise<{ deleted: number }> {
+  return apiClient.post<{ deleted: number }>("/api/v1/documentos/bulk-delete", {
+    ids,
+  });
+}
+
 export async function listDuplicados(
   documentoId: string,
 ): Promise<DuplicadoRead[]> {

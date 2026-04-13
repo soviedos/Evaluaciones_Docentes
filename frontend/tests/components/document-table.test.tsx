@@ -5,6 +5,12 @@ import { DocumentTable } from "@/features/evaluacion-docente/components/bibliote
 import type { Documento } from "@/features/evaluacion-docente/types";
 
 const mockSort = vi.fn();
+const mockRowSelectionChange = vi.fn();
+
+const selectionProps = {
+  rowSelection: {} as Record<string, boolean>,
+  onRowSelectionChange: mockRowSelectionChange,
+};
 
 function makeDoc(overrides: Partial<Documento> = {}): Documento {
   const id = crypto.randomUUID();
@@ -18,6 +24,8 @@ function makeDoc(overrides: Partial<Documento> = {}): Documento {
     error_detalle: null,
     content_fingerprint: null,
     posible_duplicado: false,
+    comentarios_total: 0,
+    comentarios_ia: 0,
     created_at: "2025-06-15T10:30:00Z",
     updated_at: "2025-06-15T10:30:00Z",
     ...overrides,
@@ -34,6 +42,8 @@ describe("DocumentTable", () => {
         sortBy="created_at"
         sortOrder="desc"
         onSort={mockSort}
+        {...selectionProps}
+        {...selectionProps}
       />,
     );
     expect(screen.getByText("Cargando documentos...")).toBeInTheDocument();
@@ -48,6 +58,7 @@ describe("DocumentTable", () => {
         sortBy="created_at"
         sortOrder="desc"
         onSort={mockSort}
+        {...selectionProps}
       />,
     );
     expect(
@@ -69,6 +80,7 @@ describe("DocumentTable", () => {
         sortBy="created_at"
         sortOrder="desc"
         onSort={mockSort}
+        {...selectionProps}
       />,
     );
 
@@ -94,6 +106,7 @@ describe("DocumentTable", () => {
         sortBy="created_at"
         sortOrder="desc"
         onSort={mockSort}
+        {...selectionProps}
       />,
     );
 
@@ -115,6 +128,7 @@ describe("DocumentTable", () => {
         sortBy="created_at"
         sortOrder="desc"
         onSort={mockSort}
+        {...selectionProps}
       />,
     );
 
@@ -134,6 +148,7 @@ describe("DocumentTable", () => {
         sortBy="created_at"
         sortOrder="desc"
         onSort={mockSort}
+        {...selectionProps}
       />,
     );
 
@@ -162,6 +177,7 @@ describe("DocumentTable", () => {
         sortBy="created_at"
         sortOrder="desc"
         onSort={mockSort}
+        {...selectionProps}
       />,
     );
 
@@ -178,6 +194,7 @@ describe("DocumentTable", () => {
         sortBy="created_at"
         sortOrder="desc"
         onSort={mockSort}
+        {...selectionProps}
       />,
     );
 

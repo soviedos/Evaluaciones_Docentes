@@ -4,9 +4,20 @@ import type {
   DimensionPromedio,
   DocentePromedio,
   PeriodoMetrica,
+  PeriodoOption,
   RankingDocente,
   ResumenGeneral,
 } from "@/features/evaluacion-docente/types";
+
+export async function fetchPeriodos(
+  params?: { modalidad?: string },
+  signal?: AbortSignal,
+): Promise<PeriodoOption[]> {
+  return apiClient.get<PeriodoOption[]>(
+    `/api/v1/analytics/periodos${buildQuery(params ?? {})}`,
+    signal,
+  );
+}
 
 export async function fetchResumen(
   periodo?: string,
