@@ -14,6 +14,8 @@ CMD ["npm", "run", "dev", "--", "-H", "0.0.0.0"]
 
 # ---- Production ----
 FROM base AS production
+ARG BACKEND_URL=http://backend:8000
+ENV BACKEND_URL=${BACKEND_URL}
 RUN npm run build
 EXPOSE 3000
 CMD ["npm", "start"]
