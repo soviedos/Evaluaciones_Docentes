@@ -43,7 +43,6 @@ describe("DocumentTable", () => {
         sortOrder="desc"
         onSort={mockSort}
         {...selectionProps}
-        {...selectionProps}
       />,
     );
     expect(screen.getByText("Cargando documentos...")).toBeInTheDocument();
